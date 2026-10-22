@@ -1,0 +1,327 @@
+{
+  "date": "2026-10-22",
+  "element": "US Technician (Element 2)",
+  "pool": "2026-2030",
+  "effective": "2026-07-01 through 2030-06-30",
+  "errata_issued": "2026-02-19",
+  "question_count": 409,
+  "question_id_pattern": "T#X##",
+  "question_ids_matching_pattern": 409,
+  "unique_question_ids": 409,
+  "public_domain_statement": "The NCVEC Question Pool Committee (QPC) hereby releases the 2026-2030 Technician Class (Element 2) Question Pool into the public domain.",
+  "public_domain_source": "https://www.ncvec.org/index.php/2026-2030-technician-question-pool",
+  "public_domain_statement_in_feb19_pdf_or_docx": false,
+  "mirror": {
+    "repository": "https://github.com/russolsen/ham_radio_question_pool",
+    "path": "technician-2026-2030/",
+    "license": "Apache-2.0",
+    "commit_sha": "6122699c9541f26d88298db379b5e252885c42a2",
+    "commit_date": "2026-08-21T13:29:40Z",
+    "commit_message": "Merge pull request #9 from DubsterDev/fix_e7g02_figure\n\nFix missing figure in question E7G02",
+    "last_commit_touching_path": {
+      "sha": "b31375484a6fb5ca5ba150aba9b044d473cf971a",
+      "date": "2026-04-07T00:59:18Z",
+      "message": "Add release file."
+    }
+  },
+  "errata_verification": [
+    {
+      "id": "T1C01",
+      "result": "pass",
+      "json_question": "For which classes of amateur radio licenses does the FCC currently issue new licenses?",
+      "official_feb19_wording": "For which classes of amateur radio licenses does the FCC currently issue new licenses?"
+    },
+    {
+      "id": "T5A05",
+      "result": "pass",
+      "json_question": "A difference in which of the following causes electron flow?",
+      "official_feb19_wording": "A difference in which of the following causes electron flow?"
+    },
+    {
+      "id": "T7A09",
+      "result": "pass",
+      "json_question": "What is the function of the switch which selects either SSB or CW-FM on some VHF power amplifiers?",
+      "official_feb19_wording": "What is the function of the switch which selects either SSB or CW-FM on some VHF power amplifiers?"
+    },
+    {
+      "id": "T0A10",
+      "result": "pass",
+      "json_question": "What hazard exists when rapidly charging or discharging an unprotected battery?",
+      "official_feb19_wording": "What hazard exists when rapidly charging or discharging an unprotected battery?"
+    }
+  ],
+  "figure_questions": [
+    {
+      "id": "T6A09",
+      "figure": "t-2.png"
+    },
+    {
+      "id": "T6C02",
+      "figure": "t-1.png"
+    },
+    {
+      "id": "T6C03",
+      "figure": "t-1.png"
+    },
+    {
+      "id": "T6C04",
+      "figure": "t-1.png"
+    },
+    {
+      "id": "T6C05",
+      "figure": "t-1.png"
+    },
+    {
+      "id": "T6C06",
+      "figure": "t-2.png"
+    },
+    {
+      "id": "T6C07",
+      "figure": "t-2.png"
+    },
+    {
+      "id": "T6C08",
+      "figure": "t-2.png"
+    },
+    {
+      "id": "T6C09",
+      "figure": "t-2.png"
+    },
+    {
+      "id": "T6C10",
+      "figure": "t-3.png"
+    },
+    {
+      "id": "T6C11",
+      "figure": "t-3.png"
+    },
+    {
+      "id": "T6D10",
+      "figure": "t-1.png"
+    }
+  ],
+  "syllabus": [
+    {
+      "subelement": "T1",
+      "title": "COMMISSION’S RULES",
+      "exam_questions": 6,
+      "groups": 6,
+      "pool_questions": 68
+    },
+    {
+      "subelement": "T2",
+      "title": "OPERATING PROCEDURES",
+      "exam_questions": 3,
+      "groups": 3,
+      "pool_questions": 37
+    },
+    {
+      "subelement": "T3",
+      "title": "RADIO WAVE PROPAGATION",
+      "exam_questions": 3,
+      "groups": 3,
+      "pool_questions": 35
+    },
+    {
+      "subelement": "T4",
+      "title": "AMATEUR RADIO PRACTICES",
+      "exam_questions": 2,
+      "groups": 2,
+      "pool_questions": 23
+    },
+    {
+      "subelement": "T5",
+      "title": "ELECTRICAL PRINCIPLES",
+      "exam_questions": 4,
+      "groups": 4,
+      "pool_questions": 50
+    },
+    {
+      "subelement": "T6",
+      "title": "ELECTRONIC AND ELECTRICAL COMPONENTS",
+      "exam_questions": 4,
+      "groups": 4,
+      "pool_questions": 46
+    },
+    {
+      "subelement": "T7",
+      "title": "PRACTICAL CIRCUITS",
+      "exam_questions": 4,
+      "groups": 4,
+      "pool_questions": 44
+    },
+    {
+      "subelement": "T8",
+      "title": "SIGNALS AND EMISSIONS",
+      "exam_questions": 4,
+      "groups": 4,
+      "pool_questions": 47
+    },
+    {
+      "subelement": "T9",
+      "title": "ANTENNAS AND FEED LINES",
+      "exam_questions": 2,
+      "groups": 2,
+      "pool_questions": 23
+    },
+    {
+      "subelement": "T0",
+      "title": "SAFETY",
+      "exam_questions": 3,
+      "groups": 3,
+      "pool_questions": 36
+    }
+  ],
+  "syllabus_totals": {
+    "exam_questions": 35,
+    "groups": 35,
+    "pool_questions": 409
+  },
+  "files": [
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/ncvec/2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.pdf",
+      "bytes": 480239,
+      "sha256": "3618649d64df77f2cf217fa79ef82094fe5d2d41b26d20ce08c46ca1c3d5055a",
+      "nonempty": true,
+      "source_url": "https://ncvec.org/downloads/2026-2030%20Technician%20Pool%20and%20Syllabus%20Public%20Release%20Feb%2019%202026.pdf",
+      "role": "ncvec-errata-pool-pdf"
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/ncvec/2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.docx",
+      "bytes": 489983,
+      "sha256": "c3bb9ebf46730a9812ae854d12a93f07b7a38f521441e51c451e917ccb9e3a54",
+      "nonempty": true,
+      "source_url": "https://ncvec.org/downloads/2026-2030%20Technician%20Pool%20and%20Syllabus%20Public%20Release%20Feb%2019%202026.docx",
+      "role": "ncvec-errata-pool-docx"
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/ncvec/2026-2030 Technician Pool 3 Diagrams.pdf",
+      "bytes": 278003,
+      "sha256": "0b2f636a399100ab42a929328e187cef925d6d50666599ad58aff318cd81147c",
+      "nonempty": true,
+      "source_url": "https://ncvec.org/downloads/TECH_2026/2026-2030%20Technician%20Pool%203%20Diagrams.pdf",
+      "role": "ncvec-diagrams-pdf"
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/ncvec/Technician Diagram T1.jpg",
+      "bytes": 115824,
+      "sha256": "7e5f000404feeae942c625a773f0a02c3ee3b5bafda2218d6b8b0d3653288462",
+      "nonempty": true,
+      "source_url": "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T1.jpg",
+      "role": "ncvec-figure-jpg"
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/ncvec/Technician Diagram T2.jpg",
+      "bytes": 140293,
+      "sha256": "36313bc65ea22bd483e9b0ff2cd8e7dbce3784e2b009046879d8e5959cc9ebf7",
+      "nonempty": true,
+      "source_url": "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T2.jpg",
+      "role": "ncvec-figure-jpg"
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/ncvec/Technician Diagram T3.jpg",
+      "bytes": 108532,
+      "sha256": "6db1d838f067ecd00a1ee8ad1e396c9e4d4415cfbc75764169a7bc868e44dc52",
+      "nonempty": true,
+      "source_url": "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T3.jpg",
+      "role": "ncvec-figure-jpg"
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/russolsen/technician-2026-2030/technician-2026-2030.json",
+      "bytes": 165808,
+      "sha256": "7014462c1e2566a6587a153ed1ac8cda682080c3ee9318a526faf2159949fc92",
+      "nonempty": true,
+      "source_url": "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/6122699c9541f26d88298db379b5e252885c42a2/technician-2026-2030/technician-2026-2030.json",
+      "role": "apache-2.0-mirror",
+      "git_blob_sha": "ec1f08355f51b5eb525a924a9bb294d088ca52bc",
+      "git_blob_sha_matches": true
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/russolsen/technician-2026-2030/technician-2026-2030.yaml",
+      "bytes": 135798,
+      "sha256": "9b3bb80b32ee5fd2ed82f511fa92f662c4c14e11b06b24a5d0cb1e4fa0ddeb1f",
+      "nonempty": true,
+      "source_url": "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/6122699c9541f26d88298db379b5e252885c42a2/technician-2026-2030/technician-2026-2030.yaml",
+      "role": "apache-2.0-mirror",
+      "git_blob_sha": "8ff287cb461826e8e628778f1ec196932e35ef43",
+      "git_blob_sha_matches": true
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/russolsen/technician-2026-2030/technician-2026-2030.csv",
+      "bytes": 96155,
+      "sha256": "c74037ca9cc533fb6a61e49e1dc67d2e13c22413d4dcadfd94f8ae3dfe905ff6",
+      "nonempty": true,
+      "source_url": "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/6122699c9541f26d88298db379b5e252885c42a2/technician-2026-2030/technician-2026-2030.csv",
+      "role": "apache-2.0-mirror",
+      "git_blob_sha": "1a7f838cd3456cf9b670015a588e1db487e21e78",
+      "git_blob_sha_matches": true
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/russolsen/technician-2026-2030/technician-2026-2030.txt",
+      "bytes": 99927,
+      "sha256": "1bece9ad5385b3958c33bb75b9b43046ae3caff2a35391177fa2e87a47801cf9",
+      "nonempty": true,
+      "source_url": "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/6122699c9541f26d88298db379b5e252885c42a2/technician-2026-2030/technician-2026-2030.txt",
+      "role": "apache-2.0-mirror",
+      "git_blob_sha": "c7005a59fbbc7fd61896a745c0b6350cce8e02a1",
+      "git_blob_sha_matches": true
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/russolsen/technician-2026-2030/t-1.png",
+      "bytes": 38410,
+      "sha256": "ec2af4f5074067d28ce082023d09b4f0d91b891ac842f47f6ef32c979b48e14c",
+      "nonempty": true,
+      "source_url": "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/6122699c9541f26d88298db379b5e252885c42a2/technician-2026-2030/t-1.png",
+      "role": "apache-2.0-mirror",
+      "git_blob_sha": "623c9ff242f26a7a14e03a6ab829d410a4fafdc0",
+      "git_blob_sha_matches": true
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/russolsen/technician-2026-2030/t-2.png",
+      "bytes": 46564,
+      "sha256": "1612455556ea1254bac9ae0f44e0fbef49ba5f6b60fa7d20ee96318ecf753fef",
+      "nonempty": true,
+      "source_url": "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/6122699c9541f26d88298db379b5e252885c42a2/technician-2026-2030/t-2.png",
+      "role": "apache-2.0-mirror",
+      "git_blob_sha": "ffc41ab24e88cc00545afc2e59440220d0ded420",
+      "git_blob_sha_matches": true
+    },
+    {
+      "path": "/Users/ericanderson/Workspaces/ham/source-materials/technician/russolsen/technician-2026-2030/t-3.png",
+      "bytes": 27559,
+      "sha256": "ead47db0b67f6319aaede95d9a690c6a3e9cbcc01cc15a762e45143d1ae41e8a",
+      "nonempty": true,
+      "source_url": "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/6122699c9541f26d88298db379b5e252885c42a2/technician-2026-2030/t-3.png",
+      "role": "apache-2.0-mirror",
+      "git_blob_sha": "c828fbb9a29b255f659c89b2d32a4ef02889db7b",
+      "git_blob_sha_matches": true
+    }
+  ],
+  "failed_urls": [
+    {
+      "url": "https://ncvec.org/downloads/TECH_2026/",
+      "http": 403,
+      "note": "Cloudflare blocked the directory index. Figure hrefs were taken from the release page."
+    },
+    {
+      "url": "https://www.ncvec.org/downloads/TECH_2026/",
+      "http": 403,
+      "note": "Same directory index on the www host."
+    }
+  ],
+  "unlinked_figure_names_404": [
+    "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T1.png",
+    "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T2.png",
+    "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T3.png",
+    "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T1.svg",
+    "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T2.svg",
+    "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T3.svg",
+    "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T-1.jpg",
+    "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T-2.jpg",
+    "https://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T-3.jpg"
+  ],
+  "not_downloaded": [
+    "December 18, 2025 pool PDF and DOCX remain linked on the release page and were left in place; the February 19, 2026 errata files are the current pool.",
+    "ARRL license manuals, HamBook prose, and HamStudy explanations were not downloaded."
+  ]
+}

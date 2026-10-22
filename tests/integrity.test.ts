@@ -1,0 +1,194 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import fc from "fast-check";
+import { describe, expect, it } from "vitest";
+import { selectActive } from "@/lib/active-pool";
+import { legalOn } from "@/lib/bands";
+import { createExam, practiceOrder, scoreExam } from "@/lib/exam";
+import { EXPECTED_FIGURES, FIGURE_ASSETS, LIVE_COUNTS, WITHDRAWN } from "@/lib/pool-facts";
+import { pools, registry } from "@/lib/pools";
+import { groupStatus, readyToTest, recordAnswer, recordExam, EMPTY_PROGRESS } from "@/lib/readiness";
+import { commitScore, emptySession } from "@/lib/session";
+import { parseStored, progressSchema } from "@/lib/storage";
+import type { PoolRegistryEntry } from "@/lib/pool-types";
+
+const root = path.resolve(__dirname, "..");
+
+describe("pools", () => {
+  it("matches the live counts, pass marks, and errata stems", () => {
+    expect(pools.technician.questions).toHaveLength(LIVE_COUNTS.technician);
+    expect(pools.general.questions).toHaveLength(LIVE_COUNTS.general);
+    expect(pools.extra.questions).toHaveLength(LIVE_COUNTS.extra);
+    expect(pools.technician.passingCount).toBe(26);
+    expect(pools.general.passingCount).toBe(26);
+    expect(pools.extra.passingCount).toBe(37);
+    expect(pools.technician.examQuestions).toBe(35);
+    expect(pools.general.examQuestions).toBe(35);
+    expect(pools.extra.examQuestions).toBe(50);
+    expect(pools.technician.groups).toHaveLength(35);
+    expect(pools.general.groups).toHaveLength(35);
+    expect(pools.extra.groups).toHaveLength(50);
+
+    const stems: Record<string, string> = {
+      T1C01: "For which classes of amateur radio licenses does the FCC currently issue new licenses?",
+      T5A05: "A difference in which of the following causes electron flow?",
+      T7A09: "What is the function of the switch which selects either SSB or CW-FM on some VHF power amplifiers?",
+      T0A10: "What hazard exists when rapidly charging or discharging an unprotected battery?",
+    };
+    for (const [id, stem] of Object.entries(stems)) {
+      expect(pools.technician.questions.find((question) => question.id === id)?.text).toBe(stem);
+    }
+  });
+
+  it("drops withdrawn questions and keeps G1C at eight", () => {
+    const ids = new Set(Object.values(pools).flatMap((pool) => pool.questions.map((question) => question.id)));
+    for (const id of WITHDRAWN) expect(ids.has(id)).toBe(false);
+    const g1 = pools.general.questions.filter((question) => question.subelement === "G1");
+    expect(g1.length).not.toBe(54);
+    expect(g1.filter((question) => question.group === "G1C")).toHaveLength(8);
+    expect(pools.extra.questions.length).not.toBe(602);
+  });
+
+  it("resolves every figure, including E7G02 and the rotated Smith chart", () => {
+    for (const pool of Object.values(pools)) {
+      for (const question of pool.questions) {
+        expect(question.answers).toHaveLength(4);
+        expect(question.distractors.filter((line) => line.length > 0)).toHaveLength(3);
+        const expected = EXPECTED_FIGURES[question.id] ?? null;
+        expect(question.figure).toBe(expected);
+        if (question.figure) {
+          const asset = FIGURE_ASSETS[question.figure];
+          expect(asset, question.id).toBeTruthy();
+          expect(existsSync(path.join(root, "public", asset!.replace(/^\//, "")))).toBe(true);
+        }
+      }
+    }
+    const e7g02 = pools.extra.questions.find((question) => question.id === "E7G02");
+    expect(e7g02?.figure).toBe("E7-3");
+    expect(e7g02?.text.toLowerCase()).toContain("circuit in e7");
+    const svg = readFileSync(path.join(root, "public/figures/E9-3.svg"), "utf8");
+    const infinity = svg.match(/matrix\(1 0 0 1 ([\d.]+) [\d.]+\)[^>]*>∞/);
+    const zero = svg.match(/matrix\(4\.489659e-11 -1 1 4\.489659e-11 ([\d.]+) 118\.1709\)[^>]*>0</);
+    expect(infinity).toBeTruthy();
+    expect(zero).toBeTruthy();
+    expect(Number(infinity?.[1])).toBeGreaterThan(Number(zero?.[1]));
+  });
+});
+
+describe("active pool", () => {
+  const future: PoolRegistryEntry = {
+    licenseClass: "general",
+    series: "general-2027-2031",
+    revision: "general-2027-2031-draft",
+    element: 3,
+    effectiveFrom: "2027-07-01",
+    effectiveThrough: "2031-06-30",
+    errataDate: "2027-07-01",
+    examQuestions: 35,
+    passingCount: 26,
+    questionCount: 1,
+    file: "future.json",
+  };
+  const entries = [...registry.pools, future];
+
+  it("keeps exactly one series across the July 1 boundary", () => {
+    expect(selectActive(registry.pools, "technician", "2026-06-30")).toBeNull();
+    expect(selectActive(registry.pools, "technician", "2026-07-01")?.revision).toBe(pools.technician.revision);
+    expect(selectActive(registry.pools, "technician", "2030-06-30")).not.toBeNull();
+    expect(selectActive(registry.pools, "technician", "2030-07-01")).toBeNull();
+    expect(selectActive(entries, "general", "2027-06-30")?.revision).toBe(pools.general.revision);
+    expect(selectActive(entries, "general", "2027-07-01")?.revision).toBe(future.revision);
+    expect(selectActive(registry.pools, "extra", "2024-07-01")).not.toBeNull();
+    expect(selectActive(registry.pools, "extra", "2028-07-01")).toBeNull();
+    expect(selectActive(entries, "general", "2026-10-22")?.revision).toBe(pools.general.revision);
+    expect(
+      selectActive(
+        [registry.pools[1]!, { ...registry.pools[1]!, revision: "overlap" }],
+        "general",
+        "2026-10-22",
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("exam", () => {
+  it("draws one active question per group for many seeds", () => {
+    fc.assert(
+      fc.property(fc.string({ minLength: 1, maxLength: 32 }), fc.constantFrom(...Object.values(pools)), (seed, pool) => {
+        const paper = createExam(pool, seed, 1);
+        expect(paper.questionIds).toHaveLength(pool.examQuestions);
+        expect(new Set(paper.questionIds).size).toBe(pool.examQuestions);
+        const byId = new Map(pool.questions.map((question) => [question.id, question]));
+        const groups = paper.questionIds.map((id) => {
+          const question = byId.get(id);
+          expect(question).toBeTruthy();
+          expect(WITHDRAWN).not.toContain(id);
+          return question!.group;
+        });
+        expect(new Set(groups)).toEqual(new Set(pool.groups.map((group) => group.id)));
+        expect(createExam(pool, seed, 1).questionIds).toEqual(paper.questionIds);
+        const order = practiceOrder(["a", "b", "c", "d"], seed);
+        expect(new Set(order)).toEqual(new Set([0, 1, 2, 3]));
+      }),
+      { numRuns: 40 },
+    );
+  });
+
+  it("counts blanks as misses and records a paper once", () => {
+    const pool = pools.technician;
+    const paper = createExam(pool, "score", 5);
+    const blank = emptySession(paper, false);
+    const missed = scoreExam(pool, paper, blank.answers);
+    expect(missed.correct).toBe(0);
+    expect(missed.unansweredIds).toHaveLength(35);
+    expect(missed.passed).toBe(false);
+
+    const session = emptySession(paper, false);
+    const question = pool.questions.find((item) => item.id === paper.questionIds[0]);
+    session.answers[0] = question!.correctIndex;
+    const first = commitScore({ keys: [] }, session, pool);
+    const second = commitScore(first.log, first.session, pool);
+    expect(first.session.result?.correct).toBe(1);
+    expect(second.session).toBe(first.session);
+    expect(second.log.keys).toEqual(first.log.keys);
+    expect(first.log.keys).toHaveLength(1);
+
+    const general = createExam(pools.general, "g1c", 9);
+    const g1c = general.questionIds.filter((id) => id.startsWith("G1C"));
+    expect(g1c).toHaveLength(1);
+    expect(scoreExam(pools.extra, createExam(pools.extra, "extra", 3), Array(50).fill(0)).passingCount).toBe(37);
+  });
+});
+
+describe("readiness and storage", () => {
+  it("describes a group in plain language and rejects a bad progress record", () => {
+    const pool = pools.technician;
+    const group = pool.groups[0]!;
+    expect(groupStatus(pool, EMPTY_PROGRESS, group.id)).toBe("unseen");
+    let book = EMPTY_PROGRESS;
+    for (const question of pool.questions.filter((item) => item.group === group.id)) {
+      book = recordAnswer(book, question.id, true);
+    }
+    expect(groupStatus(pool, book, group.id)).toBe("solid");
+    const exams = [1, 2, 3, 4, 5].reduce((current, at) => recordExam(current, "technician", 30, 35, at), book);
+    const all = pool.questions.reduce((current, question) => recordAnswer(current, question.id, true), exams);
+    for (const sub of pool.subelements) {
+      const groups = pool.groups.filter((item) => item.subelement === sub.id);
+      for (const item of groups) {
+        expect(["learned", "solid"]).toContain(groupStatus(pool, all, item.id));
+      }
+    }
+    expect(readyToTest(pool, all).ready).toBe(true);
+    expect(parseStored("{", progressSchema, EMPTY_PROGRESS)).toEqual(EMPTY_PROGRESS);
+    expect(parseStored(JSON.stringify({ version: 2 }), progressSchema, EMPTY_PROGRESS)).toEqual(EMPTY_PROGRESS);
+  });
+
+  it("answers the band questions the exam actually asks", () => {
+    expect(legalOn(28.4, "technician", "phone").allowed).toBe(true);
+    expect(legalOn(14.2, "technician", "phone").allowed).toBe(false);
+    expect(legalOn(14.2, "general", "phone").allowed).toBe(false);
+    expect(legalOn(14.3, "general", "phone").allowed).toBe(true);
+    expect(legalOn(7.05, "technician", "cw").allowed).toBe(true);
+    expect(legalOn(7.05, "technician", "phone").allowed).toBe(false);
+  });
+});

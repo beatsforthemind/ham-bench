@@ -1,0 +1,45 @@
+{
+  "generatedFrom": "ncvec-docx",
+  "mirrorCommit": "6122699c9541f26d88298db379b5e252885c42a2",
+  "pools": [
+    {
+      "licenseClass": "technician",
+      "series": "technician-2026-2030",
+      "revision": "technician-2026-2030-2026-02-19",
+      "element": 2,
+      "effectiveFrom": "2026-07-01",
+      "effectiveThrough": "2030-06-30",
+      "errataDate": "2026-02-19",
+      "examQuestions": 35,
+      "passingCount": 26,
+      "questionCount": 409,
+      "file": "technician.json"
+    },
+    {
+      "licenseClass": "general",
+      "series": "general-2023-2027",
+      "revision": "general-2023-2027-2026-02-04",
+      "element": 3,
+      "effectiveFrom": "2023-07-01",
+      "effectiveThrough": "2027-06-30",
+      "errataDate": "2026-02-04",
+      "examQuestions": 35,
+      "passingCount": 26,
+      "questionCount": 423,
+      "file": "general.json"
+    },
+    {
+      "licenseClass": "extra",
+      "series": "extra-2024-2028",
+      "revision": "extra-2024-2028-2026-02-04",
+      "element": 4,
+      "effectiveFrom": "2024-07-01",
+      "effectiveThrough": "2028-06-30",
+      "errataDate": "2026-02-04",
+      "examQuestions": 50,
+      "passingCount": 37,
+      "questionCount": 599,
+      "file": "extra.json"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-source), "Source Sans 3", sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --color-paper: #f4efe6;
+  --color-paper-deep: #e7dccb;
+  --color-card: #fbf7f0;
+  --color-ink: #2a211c;
+  --color-ink-soft: #5c4e45;
+  --color-walnut: #3a2a22;
+  --color-walnut-deep: #1e1a17;
+  --color-amber: #c47a2c;
+  --color-sage: #3f6b4e;
+  --color-brass: #8c6a32;
+  --color-extra: #1e3a5f;
+  --color-line: #ddcbb8;
+}
+
+html {
+  background: #efe4d4;
+}
+
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(900px 420px at 8% -10%, #fff8ee, transparent 55%),
+    linear-gradient(180deg, #f7f1e6 0%, #efe4d4 100%);
+  color: var(--color-ink);
+  font-family: var(--font-source), "Source Sans 3", sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+.display {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: #e7c27a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

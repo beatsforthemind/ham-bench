@@ -1,0 +1,56 @@
+Source: https://www.ncvec.org/index.php/2026-2030-technician-question-pool
+Retrieved: 2026-10-22
+
+2026-2030 Technician Question Pool Public Release
+
+Errata Issued February 19, 2026
+
+The following changes must be made to the originally posted Technician Pool
+
+In the pool itself, 4 questions modified:
+
+T1C01 – change the question to read:
+
+For which classes of amateur radio licenses does the FCC currently issue new licenses?
+
+T5A05 – change the question to read:
+
+A difference in which of the following causes electron flow?
+
+T7A09 – change the question to read:
+
+What is the function of the switch which selects either SSB or CW-FM on some VHF power amplifiers?
+
+T0A10 – change the question to read:
+
+What hazard exists when rapidly charging or discharging an unprotected battery?
+
+2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.docx [http://ncvec.org/downloads/2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.docx] 
+2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.pdf [http://ncvec.org/downloads/2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.pdf]
+
+ | 
+
+Release date December 18, 2025
+
+2026-2030 Technician Pool and Syllabus Public Release Dec 18 2025.docx [http://ncvec.org/downloads/TECH_2026/2026-2030 Technician Pool and Syllabus Public Release Dec 18 2025.docx] 
+2026-2030 Technician Pool and Syllabus Public Release December 18 2025.pdf [http://ncvec.org/downloads/TECH_2026/2026-2030%20Technician%20Pool%20and%20Syllabus%20Public%20Release%20Dec%2018%202025.pdf] 
+
+2026-2030 Technician Pool 3 Diagrams.pdf [http://ncvec.org/downloads/TECH_2026/2026-2030%20Technician%20Pool%203%20Diagrams.pdf]
+
+Diagram T-1.jpg [http://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T1.jpg]
+Diagram T-2.jpg [http://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T2.jpg]
+Diagram T-3.jpg [http://ncvec.org/downloads/TECH_2026/Technician%20Diagram%20T3.jpg]
+
+ | 
+
+The NCVEC Question Pool Committee (QPC) hereby releases the 2026-2030 Technician Class (Element 2) Question Pool into the public domain.
+
+Committee Contacts:
+
+- Roland Anders, K3RA – Anchorage VEC, Chairman
+
+- Maria Somma, AB1FM – ARRL VEC, member
+
+Submit feedback or questions to: [email obfuscated on page]
+
+To request a list of the new and modified questions, email the [email obfuscated on page] directly.

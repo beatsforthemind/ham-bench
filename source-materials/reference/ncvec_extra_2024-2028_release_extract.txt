@@ -1,0 +1,116 @@
+Source: https://www.ncvec.org/index.php/2024-2028-extra-class-question-pool-release
+Retrieved: 2026-10-22
+
+2024- 2028 Extra Class Question Pool Release
+
+4th Errata Issued February 4, 2026
+
+One Question Withdrawn From Use:
+
+E4D05 – removed from use
+
+Question E4D05 is withdrawn from the pool and marked as deleted.
+
+The remaining questions in E4D were not renumbered, leaving 13 questions.
+
+2024-2028 Extra Class Question Pool and Syllabus Public Release with 4th Errata Feb 4 2026.docx [http://ncvec.org/downloads/2024-2028 Extra Class Question Pool and Syllabus Public Release with 4th Errata Feb 4 2026.docx]
+
+2024-2028 Extra Class Question Pool and Syllabus Public Release with 4th Errata Feb 4 2026.pdf [http://ncvec.org/downloads/2024-2028 Extra Class Question Pool and Syllabus Public Release with 4th Errata Feb 4 2026.pdf]
+
+ | 
+
+Release date September 24 2025
+
+This is to inform you that, effective immediately,  the Question Pool Committee is withdrawing Extra-Class question E6D07 from the Element 4 Extra-Class question pool.  All Volunteer Examiner Coordinators (VECs) and examiners are instructed to remove E6D07 from examinations as soon as possible.  The decision was made when it was determined that the question contained more than one correct answer.
+
+Released  November 8, 2024
+
+The NCVEC Question Pool Committee hereby releases into public domain the 2024-2028 Element 4 Extra Class Question Pool.
+
+The final pool doc with all errata is included at the top of this page.
+
+2024-2028 Extra Class Question Pool and Syllabus Public Release with 3rd Errata Sept 25 2025.docx [http://ncvec.org/downloads/2024-2028 Extra Class Question Pool and Syllabus Public Release with 3rd Errata Sept 25 2025.docx]
+
+2024-2028 Extra Class Question Pool and Syllabus Public Release with 3rd Errata Sept 25 2025.pdf [http://ncvec.org/downloads/2024-2028 Extra Class Question Pool and Syllabus Public Release with 3rd Errata Sept 25 2025.pdf]
+
+ | 
+
+2nd Errata Issued November 8, 2024
+
+One Question Withdrawn From Use:
+
+E2A13 – question deleted
+
+Question E2A13 is withdrawn from the pool and marked as deleted.
+
+The remaining questions in G8C were not renumbered, leaving 15 questions.
+
+Released January 31, 2024
+
+The NCVEC Question Pool Committee hereby releases into public domain the 2024-2028 Element 4 Extra Class Question Pool.
+
+ Extra_Figures_2024-2028-1.pdf [https://www.ncvec.org/downloads/Extra_Figures_2024-2028-1.pdf]
+
+2024-2028 Amateur Extra Class Pool Diagrams_Page_1 [https://www.ncvec.org/downloads/2024-2028 Amateur Extra Class Pool Diagrams_Page_1.jpg]
+2024-2028 Amateur Extra Class Pool Diagrams_Page_2 [https://www.ncvec.org/downloads/2024-2028 Amateur Extra Class Pool Diagrams_Page_2.jpg]
+ 2024-2028 Amateur Extra Class Pool Diagrams_Page_3_V2.jpg [https://www.ncvec.org/downloads/2024-2028 Amateur Extra Class Pool Diagrams_Page_3_V2.jpg]
+
+E4_2024-svgs.zip [https://www.ncvec.org/downloads/e4_2024-svgs.zip]
+
+ | 
+
+Errata Issued January 31, 2024 
+
+In the diagrams, one diagram modified: 
+
+Diagram E9-3 – the Smith Chart has been rotated 90 degrees to the conventional horizontal orientation with infinity on the right. All pool documents (PDF, JPG, and Word) have been updated. 
+
+In the pool itself, 1 question deleted and 5 questions modified: 
+
+E1D07 – in the question change “group of” to “of the following” to read:
+
+Which of the following HF amateur bands include allocations for space stations? 
+
+E1F03 – replace answer D to read:
+
+D. The amplifier is constructed or modified by an amateur radio operator for use at an amateur station 
+
+E4D12 – in the question change “100 W” to “10 W” to read:
+
+What is the link margin in a system with a transmit power level of 10 W (+40 dBm), a system antenna gain of 10 dBi, a cable loss of 3 dB, a path loss of 136 dB, a receiver minimum discernable signal of -103 dBm, and a required signal-to-noise ratio of 6 dB? 
+
+E4D13 – in the question change “100 W” to “10 W” to read:
+
+What is the received signal level with a transmit power of 10 W (+40 dBm), a transmit antenna gain of 6 dBi, a receive antenna gain of 3 dBi, and a path loss of 100 dB? 
+
+E6A06 – in answer B add “the change in” before base current to read:
+
+B. The change in collector current with respect to the change in base current
+
+E9E10– removed from use
+
+Question E9E10 is withdrawn from the pool and marked as deleted; the remaining questions in E9E were not renumbered, leaving 10 questions. 
+
+In the pool itself, 2 questions FCC rule citation updated:
+
+The citations do not affect the questions and are only included for reference. 
+
+E1E10 – update the rule citation’s letter from “h” to “m” to read:
+
+E1E10 (C) [97.509(m)] 
+
+E1E11 – update the rule citation’s letter from “m” to “i” to read:
+
+E1E11 (B) [97.509(i)]
+
+Roland Anders, K3RA - Anchorage VEC
+
+Chairman of NCVEC Question Pool Committee 
+
+Members of the Committee:
+Maria Somma, AB1FM - ARRL VEC
+Larry Pollock, NB5X - W5YI VEC
+
+You may submit feedback or questions to the QPC by email to: [email obfuscated on page]
+
+ |

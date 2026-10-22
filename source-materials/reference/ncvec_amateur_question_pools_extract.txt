@@ -1,0 +1,38 @@
+Source: https://www.ncvec.org/index.php/amateur-question-pools
+Retrieved: 2026-10-22
+
+Amateur Question Pools
+
+The Question Pools are developed and maintained by the Question Pool Committee (QPC) of the NCVEC by FCC instruction and Part 97 Rules & Regulation : Sec. 97.523 Question pools All VECs must cooperate in maintaining one question pool for each written examination element. Each question pool must contain at least 10 times the number of questions required for a single examination. Each question pool must be published and made available to the public prior to its use for making a question set. Each question on each VEC question pool must be prepared by a VE holding the required FCC-issued operator license.
+
+The question pools review is part of a regular process.
+
+The pools are normally valid for 4 years and each question pool is reviewed and updated on a four-year rotation.
+
+For detailed information about each question pool, please visit that pool’s webpage.
+
+Each FCC Element or question pool consists of at least 10 times the number of questions required for a single examination and is released to the public normally 6 months prior to becoming effective for use in examinations to allow plenty of time for publication and study. Each element or pool has a syllabus that is broken down into main sub-element sections(normally 10) and an unlimited number of sub-topic sections under each sub-element. Each sub-element is numbered with a prefix designating the Element number, example T1, T2 etc., followed by the subtopic letter for the section of each sub-element, example T1A,T1B, etc.
+
+The 4 parts of a Question Pool Element Syllabus are:
+
+1. Sub-Element ( T1, G1, E1,.. etc. 1-0 )
+
+2. Sub-Topic (T1A, G1A, E1A... etc.)
+
+3. Questions and Answers ( T1A01, G1A01, E1A01 etc.)
+
+4 Diagrams used for exams
+
+The actual questions are numbered in a format that reflects the element, sub-element and subtopic section of the syllabus where the question is found, example: T1A01 etc. Each pool is released with the exact questions and 4 multiple choice answers and the correct answer for each question is designated in ( ) just after each question; Example: T1A01 (D) some with a rules reference [97.xxx] after the correct answer letter. On the actual exam, the correct answer letter in parentheses, and any rules citations do not appear with the question number.
+
+The QPC invites question pool submissions from the amateur radio community and will take all comments and suggestions into consideration when reviewing and updating the question pools. Input from the amateur radio community may include suggestions for new questions, changes to the topic areas, or changes to existing questions in any of the current amateur radio examination question pools. Provide comments or actual questions for consideration to the QPC by email at [email obfuscated on page]
+
+When submitting new pool questions for the QPC to review, please follow these guidelines:
+
+(1) Questions must have no more than 210 characters, including spaces, or a maximum of three 70-character lines.
+
+(2) Distractors must be no more than 140 characters, including spaces, or two 70-character lines in length.
+
+(3) Each multiple-choice question must be accompanied by 4 possible answers. The answers may be in any order, but the correct answer must be indicated.
+
+(4). Provide resource for correct answers or Part 97 rule to support correct answer and explanation of the correct answer for QPC review

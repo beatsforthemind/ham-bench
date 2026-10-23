@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { groupStatus } from "@/lib/readiness";
+import { CLASS_INFO } from "@/lib/class-info";
+import { benchHomeAction, classPracticeHref } from "@/lib/home-action";
 import { pools } from "@/lib/pools";
 import type { LicenseClass } from "@/lib/pool-types";
+import { groupStatus } from "@/lib/readiness";
 import { useBench } from "./bench-provider";
-import { StudyClassPicker } from "./site-header";
+
+const CLASSES = ["technician", "general", "extra"] as const;
 
 export function BenchHome() {
-  const { progress, session, ready, settings } = useBench();
+  const { progress, session, ready, settings, setSettings } = useBench();
   const tech = pools.technician;
   const level = (subelement: string) => {
     const groups = tech.groups.filter((group) => group.subelement === subelement);
@@ -26,20 +28,35 @@ export function BenchHome() {
   };
   const generalLit = pools.general.groups.some((group) => groupStatus(pools.general, progress, group.id) !== "unseen");
   const extraLit = pools.extra.groups.some((group) => groupStatus(pools.extra, progress, group.id) !== "unseen");
-  const studyClass = settings.studyClass;
-  const resume =
-    ready && session && !session.result ? (
-      <Link
-        href={`/license/${session.paper.licenseClass}/exam`}
-        className="inline-flex min-h-11 items-center rounded-full bg-amber px-4 py-2 text-walnut-deep"
-      >
-        Resume the {session.paper.licenseClass} paper
-      </Link>
-    ) : null;
+  const savedClass: LicenseClass = ready ? settings.studyClass : "technician";
+  const action = benchHomeAction(ready, settings.studyClass, progress, session);
 
   return (
-    <section className="grid items-center gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-      <div className="order-2 lg:order-1">
+    <div className="space-y-8">
+      <section className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <div className="max-w-xl space-y-5">
+          <header className="space-y-2">
+            <h1 className="display text-4xl text-walnut sm:text-5xl">This is the bench.</h1>
+            <p className="text-lg text-ink-soft">The next card is the way in.</p>
+          </header>
+          <Link
+            href={action.href}
+            onClick={() => {
+              if (settings.studyClass !== action.studyClass) setSettings({ studyClass: action.studyClass });
+            }}
+            className="inline-block max-w-full min-h-11 rounded-full bg-walnut px-5 py-2.5 text-center leading-snug text-paper no-underline"
+          >
+            {action.label}
+          </Link>
+          <p className="flex flex-wrap gap-x-5 gap-y-2 text-ink-soft">
+            <Link href={`/license/${savedClass}/exam`} className="inline-flex min-h-11 items-center underline">
+              Take a mock exam
+            </Link>
+            <Link href={`/license/${savedClass}/study`} className="inline-flex min-h-11 items-center underline">
+              Study by topic
+            </Link>
+          </p>
+        </div>
         <Station
           license={level("T1")}
           meters={level("T5")}
@@ -50,51 +67,42 @@ export function BenchHome() {
           scope={generalLit ? 0.9 : 0.18}
           smith={extraLit ? 0.9 : 0.15}
         />
-      </div>
-      <div className="order-1 space-y-4 lg:order-2">
-        <StudyClassPicker />
-        <div className="flex flex-wrap gap-3">
-          <Link href={`/license/${studyClass}/practice?filter=unseen`} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 text-paper">
-            Practice unseen
-          </Link>
-          <Link href={`/license/${studyClass}/practice?filter=missed`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
-            Missed
-          </Link>
-          <Link href={`/license/${studyClass}/exam`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
-            Mock exam
-          </Link>
-        </div>
-        {resume}
-        <nav className="flex flex-wrap gap-2 md:hidden" aria-label="More bench">
-          <Link href="/bands" className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
-            Bands
-          </Link>
-          <Link href="/labs" className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
-            Labs
-          </Link>
-          <Link href="/about/sources" className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
-            Sources
-          </Link>
-        </nav>
-        <p className="text-lg text-ink-soft">
-          The station fills in as the groups get learned. Rules hang the license, the meters wake up, the schematic gets parts, the antenna goes up, and the ground rod goes in.
-        </p>
-        <p className="text-sm text-ink-soft">General and Extra light the scope and the Smith chart once those pools have been touched.</p>
-      </div>
-    </section>
-  );
-}
-
-export function LicenseCard({ licenseClass, children }: { licenseClass: LicenseClass; children: ReactNode }) {
-  const { setSettings } = useBench();
-  return (
-    <Link
-      href={`/license/${licenseClass}`}
-      onClick={() => setSettings({ studyClass: licenseClass })}
-      className="rounded-3xl border border-line bg-card p-5 no-underline"
-    >
-      {children}
-    </Link>
+      </section>
+      <nav aria-label="Start a license class" className="flex flex-wrap items-center gap-x-2 text-lg">
+        {CLASSES.map((licenseClass, index) => (
+          <span key={licenseClass} className="inline-flex items-center gap-x-2">
+            {index > 0 ? (
+              <span aria-hidden="true" className="text-ink-soft">
+                ·
+              </span>
+            ) : null}
+            <Link
+              href={classPracticeHref(licenseClass, progress)}
+              aria-current={licenseClass === savedClass ? "true" : undefined}
+              onClick={() => {
+                if (settings.studyClass !== licenseClass) setSettings({ studyClass: licenseClass });
+              }}
+              className={`inline-flex min-h-11 items-center ${licenseClass === savedClass ? "font-semibold text-walnut" : "text-ink-soft"}`}
+            >
+              {CLASS_INFO[licenseClass].name}
+            </Link>
+          </span>
+        ))}
+      </nav>
+      <p className="flex flex-wrap items-center gap-x-2 text-sm text-ink-soft">
+        <Link href="/bands" className="inline-flex min-h-11 items-center underline">
+          Bands
+        </Link>
+        <span aria-hidden="true">·</span>
+        <Link href="/labs" className="inline-flex min-h-11 items-center underline">
+          Labs
+        </Link>
+        <span aria-hidden="true">·</span>
+        <Link href="/about/sources" className="inline-flex min-h-11 items-center underline">
+          Sources
+        </Link>
+      </p>
+    </div>
   );
 }
 
@@ -119,18 +127,24 @@ function Station(props: {
     props.smith > 0.35 ? "Smith chart" : null,
   ].filter((part) => part != null);
   return (
-    <svg viewBox="0 0 800 460" role="img" aria-label={`A lamp-lit radio bench. Lit: ${lit.length > 0 ? lit.join(", ") : "none yet"}.`} className="w-full">
+    <svg
+      viewBox="0 0 800 460"
+      role="img"
+      aria-label={`A lamp-lit radio bench. Lit: ${lit.length > 0 ? lit.join(", ") : "the lamp"}.`}
+      className="mx-auto w-full max-w-lg"
+    >
       <defs>
-        <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id="bench-sky" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0" stopColor="#1e2a3a" />
           <stop offset="1" stopColor="#6d533c" />
         </linearGradient>
-        <radialGradient id="lamp" cx="0.5" cy="0.2" r="0.8">
-          <stop offset="0" stopColor="#f3d7a1" />
-          <stop offset="1" stopColor="#f3d7a1" stopOpacity="0" />
+        <radialGradient id="bench-lamp" cx="168" cy="72" r="190" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#8fce9f" stopOpacity="0.75" />
+          <stop offset="1" stopColor="#8fce9f" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <rect width="800" height="300" fill="url(#sky)" opacity={0.35 + props.sky * 0.65} />
+      <rect width="800" height="300" fill="url(#bench-sky)" opacity={0.35 + props.sky * 0.65} />
+      <rect width="800" height="300" fill="url(#bench-lamp)" />
       <ellipse cx="620" cy="78" rx="36" ry="36" fill="#f0d7a4" opacity={props.sky} />
       <path d="M40 250 C180 180 280 210 400 160 C520 110 640 150 760 90" fill="none" stroke="#d7c4a4" strokeWidth="3" opacity={props.sky} />
       <rect x="40" y="250" width="720" height="28" rx="6" fill="#5a3b2a" />
@@ -156,7 +170,8 @@ function Station(props: {
       <path d="M560 70 l-18 22 h36 z" fill="#2a211c" opacity={props.antenna} />
       <line x1="250" y1="278" x2="250" y2="360" stroke="#6d533c" strokeWidth="4" opacity={props.ground} />
       <path d="M230 360 h40 M236 370 h28 M242 380 h16" fill="none" stroke="#6d533c" strokeWidth="3" opacity={props.ground} />
-      <ellipse cx="250" cy="40" rx="220" ry="80" fill="url(#lamp)" />
+      <line x1="168" y1="16" x2="168" y2="52" stroke="#8fce9f" strokeWidth="4" />
+      <path d="M140 52 h56 l-12 20 h-32 z" fill="#8fce9f" />
     </svg>
   );
 }

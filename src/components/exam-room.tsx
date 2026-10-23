@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { CLASS_INFO } from "@/lib/class-info";
 import { createExam, hashSeed } from "@/lib/exam";
 import { isLicenseClass, poolForToday, questionById } from "@/lib/pools";
 import { missReview } from "@/lib/teach";
@@ -126,7 +127,7 @@ export function ExamRoom() {
         {stale ? <p>That saved paper does not match this pool. Start a new one.</p> : null}
         {confirmReplace && session ? (
           <div className="rounded-2xl border border-amber bg-card p-4">
-            <p>An unfinished {session.paper.licenseClass} paper is on the bench. Starting this one replaces it.</p>
+            <p>An unfinished {CLASS_INFO[session.paper.licenseClass].name} paper is on the bench. Starting this one replaces it.</p>
             <div className="mt-3 flex flex-wrap gap-3">
               <button type="button" className="min-h-11 rounded-full border border-line px-4" onClick={() => setConfirmReplace(false)}>
                 Keep that paper

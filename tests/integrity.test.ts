@@ -7,7 +7,7 @@ import { legalOn } from "@/lib/bands";
 import { createExam, practiceOrder, scoreExam } from "@/lib/exam";
 import { EXPECTED_FIGURES, FIGURE_ASSETS, LIVE_COUNTS, WITHDRAWN } from "@/lib/pool-facts";
 import { pools, registry } from "@/lib/pools";
-import { cardFact, ideaBeforeAnswer, missReview } from "@/lib/teach";
+import { cardFact, cardLead, ideaBeforeAnswer, missReview } from "@/lib/teach";
 import { chartHref } from "@/lib/lanes";
 import { presetFromQuestion, labHref } from "@/lib/presets";
 import { groupStatus, readyToTest, recordAnswer, recordExam, EMPTY_PROGRESS } from "@/lib/readiness";
@@ -289,6 +289,11 @@ describe("learning lanes", () => {
         const answer = question.answers[question.correctIndex] ?? "";
         if (question.lane === "card") {
           expect(cardFact(answer), question.id).toContain(answer.trim().replace(/\.$/, ""));
+          const lead = cardLead(question);
+          expect(lead.length, question.id).toBeGreaterThan(12);
+          expect(lead, question.id).not.toMatch(/^For the exam/);
+          expect(lead, question.id).not.toBe(answer.trim().replace(/\.$/, ""));
+          if (lead.startsWith("Find the choice")) expect(lead.toLowerCase(), question.id).not.toContain(answer.trim().replace(/\.$/, "").toLowerCase());
           expect(question.distractors.join(" ")).not.toContain("does not answer this question");
         } else {
           const title = pool.groups.find((group) => group.id === question.group)?.title ?? question.group;
@@ -346,6 +351,12 @@ describe("learning lanes", () => {
     const review = missReview(card, "technician", "Operating Procedures");
     expect(review.lane).toBe("card");
     expect(review.fact).toContain(card.answers[card.correctIndex] ?? "");
+    expect(cardLead(card)).toContain("blank");
+    expect(cardLead(card).toLowerCase()).not.toContain("600");
+    const phonetic = pools.technician.questions.find((question) => question.id === "T1A03")!;
+    expect(cardLead(phonetic)).toBe("Find the choice that completes this line: “It is blank when using phone emissions.”");
+    const agency = pools.technician.questions.find((question) => question.id === "T1A02")!;
+    expect(cardLead(agency)).not.toMatch(/\bFCC\b/);
     const idea = pools.technician.questions.find((question) => question.id === "T5D11")!;
     const ideaReview = missReview(idea, "technician", "Ohm’s law");
     expect(ideaReview.lane).toBe("bench");

@@ -48,7 +48,7 @@ export default async function GroupPage({
       <h1 className="display text-4xl sm:text-5xl">
         {group.id} · {group.title}
       </h1>
-      {ideas.length > 0 ? <p className="text-xl">{noteLeaks ? `This group is about ${group.title}.` : note}</p> : <p className="text-xl">These are facts the exam expects you to recognize.</p>}
+      {ideas.length > 0 ? <p className="text-xl">{noteLeaks ? `This group is about ${group.title}.` : note}</p> : <p className="text-xl">These are facts the exam expects you to recognize. Practice gives you a way into the line and lets you finish it.</p>}
       <div className="flex flex-wrap gap-3">
         {bench ? (
           <Link href={bench} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 py-2 text-paper no-underline">

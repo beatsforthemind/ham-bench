@@ -90,7 +90,7 @@ export function Syllabus({ licenseClass }: { licenseClass: LicenseClass }) {
       <section className="space-y-4">
         <h2 className="display text-4xl">For the exam</h2>
         <p className="text-xl">
-          {cards.length} cards in {cardGroups.length} groups. A mock still draws one question from every group, so the paper mixes both shelves.
+          {cards.length} cards in {cardGroups.length} groups. Practice gives each one a way in, and a mock still draws one question from every group.
         </p>
         <ul className="divide-y divide-line rounded-2xl border border-line bg-card">
           {cardGroups.map((group) => {

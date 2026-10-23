@@ -7,7 +7,7 @@ import { legalOn } from "@/lib/bands";
 import { createExam, practiceOrder, scoreExam } from "@/lib/exam";
 import { EXPECTED_FIGURES, FIGURE_ASSETS, LIVE_COUNTS, WITHDRAWN } from "@/lib/pool-facts";
 import { pools, registry } from "@/lib/pools";
-import { cardFact, cardLead, ideaBeforeAnswer, missReview } from "@/lib/teach";
+import { cardFact, cardLead, ideaBeforeAnswer, leadUsesPrivateToken, missReview } from "@/lib/teach";
 import { chartHref } from "@/lib/lanes";
 import { presetFromQuestion, labHref } from "@/lib/presets";
 import { groupStatus, readyToTest, recordAnswer, recordExam, EMPTY_PROGRESS } from "@/lib/readiness";
@@ -282,6 +282,7 @@ describe("learning lanes", () => {
   });
 
   it("keeps figures as ideas and cards off the concept benches", () => {
+    let uncovered = 0;
     for (const pool of Object.values(pools)) {
       for (const question of pool.questions) {
         if (question.figure) expect(question.lane, question.id).toBe("bench");
@@ -290,10 +291,15 @@ describe("learning lanes", () => {
         if (question.lane === "card") {
           expect(cardFact(answer), question.id).toContain(answer.trim().replace(/\.$/, ""));
           const lead = cardLead(question);
-          expect(lead.length, question.id).toBeGreaterThan(12);
-          expect(lead, question.id).not.toMatch(/^For the exam/);
-          expect(lead, question.id).not.toBe(answer.trim().replace(/\.$/, ""));
-          if (lead.startsWith("Find the choice")) expect(lead.toLowerCase(), question.id).not.toContain(answer.trim().replace(/\.$/, "").toLowerCase());
+          if (lead) {
+            expect(leadUsesPrivateToken(question, lead), question.id).toBe(false);
+            expect(lead, question.id).not.toMatch(/^For the exam/);
+            expect(lead, question.id).not.toMatch(/read the question/i);
+            expect(lead, question.id).not.toMatch(/largest (of these|number)/i);
+            expect(lead, question.id).not.toMatch(/\bblank\b/i);
+          } else {
+            uncovered += 1;
+          }
           expect(question.distractors.join(" ")).not.toContain("does not answer this question");
         } else {
           const title = pool.groups.find((group) => group.id === question.group)?.title ?? question.group;
@@ -304,6 +310,7 @@ describe("learning lanes", () => {
         }
       }
     }
+    expect(uncovered).toBeLessThanOrEqual(241);
     const question = (id: string) => Object.values(pools).flatMap((pool) => pool.questions).find((item) => item.id === id)!;
     expect(question("T7D08").lane).toBe("card");
     expect(question("T7D09").lane).toBe("card");
@@ -347,14 +354,24 @@ describe("learning lanes", () => {
     expect(live).not.toContain("exam-fact");
     expect(live).not.toContain("For the exam");
     expect(live).not.toContain("question.lane");
+    expect(live).not.toContain("cardLead");
     const card = pools.technician.questions.find((question) => question.id === "T2A01")!;
     const review = missReview(card, "technician", "Operating Procedures");
     expect(review.lane).toBe("card");
     expect(review.fact).toContain(card.answers[card.correctIndex] ?? "");
-    expect(cardLead(card)).toContain("blank");
-    expect(cardLead(card).toLowerCase()).not.toContain("600");
+    expect(cardLead(card)).not.toMatch(/\bblank\b/i);
+    expect(cardLead(card)?.toLowerCase()).not.toContain("600");
     const phonetic = pools.technician.questions.find((question) => question.id === "T1A03")!;
-    expect(cardLead(phonetic)).toBe("Find the choice that completes this line: “It is blank when using phone emissions.”");
+    expect(cardLead(phonetic)).toBe(
+      "On a voice contact the rules nudge you toward clearer speech. They do not make it mandatory, and they do not save it for emergencies or foreign stations.",
+    );
+    const power = pools.technician.questions.find((question) => question.id === "T1B11")!;
+    expect(cardLead(power)).toContain("lower");
+    expect(cardLead(power)).not.toMatch(/\b200\b/);
+    expect(cardLead(power)).not.toMatch(/\b1500\b/);
+    const races = pools.technician.questions.find((question) => question.id === "T2C12")!;
+    expect(cardLead(races)).toContain("rushing");
+    expect(cardLead(races)).not.toMatch(/\bRACES\b/);
     const agency = pools.technician.questions.find((question) => question.id === "T1A02")!;
     expect(cardLead(agency)).not.toMatch(/\bFCC\b/);
     const idea = pools.technician.questions.find((question) => question.id === "T5D11")!;

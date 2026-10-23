@@ -8,29 +8,12 @@ import { labHref } from "@/lib/presets";
 import { isLicenseClass, poolForToday } from "@/lib/pools";
 import { statFor } from "@/lib/readiness";
 import { chartHref } from "@/lib/lanes";
-import { cardFact, cardLead, conventionHook, ideaBeforeAnswer, stepsBeforeAnswer } from "@/lib/teach";
+import { cardFact, cardLead, ideaBeforeAnswer, stepsBeforeAnswer } from "@/lib/teach";
 import { FigureView } from "./figure";
 import { useBench } from "./bench-provider";
 import { SessionBar } from "./site-header";
 
 const LETTERS = ["A", "B", "C", "D"];
-
-function LeadLine({ text }: { text: string }) {
-  const parts = text.split(/\bblank\b/);
-  if (parts.length === 1) return <p className="mt-2 text-base sm:text-xl">{text}</p>;
-  return (
-    <p className="mt-2 text-base sm:text-xl">
-      {parts.map((part, index) => (
-        <span key={index}>
-          {part}
-          {index < parts.length - 1 ? (
-            <span className="mx-1 inline-block min-w-10 border-b-2 border-amber align-baseline text-amber">blank</span>
-          ) : null}
-        </span>
-      ))}
-    </p>
-  );
-}
 
 export function PracticeRoom() {
   const params = useParams<{ class: string }>();
@@ -145,21 +128,20 @@ export function PracticeRoom() {
   const groupTitle = pool.groups.find((group) => group.id === question.group)?.title ?? question.group;
   const citation = question.refs.replace(/[[\]]/g, "");
   const kind = question.lane === "card" ? "exam card" : "radio idea";
-  const lead = question.lane === "card" ? cardLead(question) : "";
-  const hook = question.lane === "card" ? conventionHook(question.id) : null;
+  const lead = question.lane === "card" ? cardLead(question) : null;
 
   return (
     <article className="space-y-4 sm:space-y-6">
       <p className="text-sm uppercase tracking-widest text-ink-soft">
         {question.group} · {cursor + 1} of {deck.length} · {kind}
       </p>
-      {question.lane === "card" ? (
+      {question.lane === "card" && lead ? (
         <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-3 outline-none sm:p-5" data-testid="exam-fact">
           <p className="text-sm uppercase tracking-widest text-ink-soft">A way in</p>
-          <LeadLine text={lead} />
+          <p className="mt-2 text-base sm:text-xl">{lead}</p>
           {citation ? <p className="mt-2 text-ink-soft">The pool cites {citation}.</p> : null}
         </div>
-      ) : (
+      ) : question.lane === "bench" ? (
         <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-3 outline-none sm:p-5" data-testid="idea-note">
           <p className="text-sm uppercase tracking-widest text-ink-soft">The idea</p>
           <p className="mt-2 text-base sm:text-xl">{ideaBeforeAnswer(question, groupTitle, question.workedSteps)}</p>
@@ -169,8 +151,15 @@ export function PracticeRoom() {
             </Link>
           ) : null}
         </div>
-      )}
-      <h1 ref={headingRef} tabIndex={-1} className="text-xl leading-snug outline-none sm:text-3xl">
+      ) : null}
+      <h1
+        ref={(node) => {
+          headingRef.current = node;
+          if (question.lane === "card" && !lead) teachRef.current = node;
+        }}
+        tabIndex={-1}
+        className="text-xl leading-snug outline-none sm:text-3xl"
+      >
         {question.text}
       </h1>
       <FigureView id={question.figure} hidden={false} compact />
@@ -211,11 +200,13 @@ export function PracticeRoom() {
       {answered ? (
         <div ref={feedbackRef} tabIndex={-1} role="status" className="scroll-mb-40 space-y-3 rounded-2xl border border-line bg-card p-4 outline-none sm:p-5" data-testid="feedback">
           {question.lane === "card" ? (
-            <p className="text-xl">{cardFact(question.answers[question.correctIndex] ?? "")}</p>
+            <>
+              <p className="text-xl">{cardFact(question.answers[question.correctIndex] ?? "")}</p>
+              {lead ? <p>{lead}</p> : null}
+            </>
           ) : (
             <p className="text-xl">The matching choice is “{question.answers[question.correctIndex]}.”</p>
           )}
-          {hook && hook !== lead ? <p>{hook}</p> : null}
           {answered.index !== question.correctIndex ? <p>{question.distractors[answered.index]}</p> : null}
           {question.lane === "card" && href ? (
             <Link href={href} className="inline-flex min-h-11 items-center rounded-full border border-line px-4">

@@ -38,7 +38,7 @@ export function Workbench({ slug }: { slug: string }) {
       </section>
     );
   }
-  const showFormula = bench.settings.fastLane || touched || search.has("q");
+  const showFormula = touched || search.has("q");
   return (
     <div className="space-y-4">
       {lab.min !== "technician" ? <p className="text-sm uppercase tracking-widest text-ink-soft">{lab.min} bench</p> : null}
@@ -72,7 +72,9 @@ function LabBody({
   if (slug === "resonance") return <ResonanceLab showFormula={showFormula} poke={poke} />;
   if (slug === "time") return <TimeLab showFormula={showFormula} poke={poke} />;
   if (slug === "phasors") return <PhasorLab showFormula={showFormula} poke={poke} />;
-  return <SmithLab />;
+  if (slug === "smith") return <SmithLab />;
+  if (slug === "bandwidth") return <BandwidthLab showFormula={showFormula} poke={poke} />;
+  return <p>That bench is not on the wall.</p>;
 }
 
 function OhmsLab({ showFormula, poke }: { showFormula: boolean; poke: () => void }) {
@@ -129,7 +131,17 @@ function OhmsLab({ showFormula, poke }: { showFormula: boolean; poke: () => void
           <p className="num mt-2 text-center text-xl">{round(watts)} W</p>
         </div>
       </div>
-      {showFormula ? <p>E = I × R. Power is I × E, and the same watts are I²R and E²/R.</p> : <p className="text-ink-soft">Move a value and the formula appears. Fast lane shows it immediately.</p>}
+      {showFormula ? <p>E = I × R. Power is I × E, and the same watts are I²R and E²/R.</p> : <p className="text-ink-soft">Move a value and the formula appears.</p>}
+      {search.get("leads") === "1" ? (
+        <div className="rounded-3xl border border-line bg-card p-4">
+          <h2 className="display text-3xl">Meter leads</h2>
+          <p className="mt-2">Voltage is measured across the resistor. Current is measured in series with it. Resistance is measured with the supply off.</p>
+          <p className="num mt-3 text-xl">
+            Across {round(shownVolts)} V. Through {round(shownAmps)} A. Supply off, the resistor still reads {round(shownOhms)} ohms.
+          </p>
+          {search.get("q") === "T7D10" ? <p className="mt-2">A discharged capacitor reads low, then climbs as it charges.</p> : null}
+        </div>
+      ) : null}
       <div className="rounded-3xl border border-line bg-card p-4">
         <button type="button" aria-pressed={pair} className="min-h-11 rounded-full border border-line px-4" onClick={() => { setPair((value) => !value); poke(); }}>
           {pair ? "Parallel" : "Series"}
@@ -270,10 +282,16 @@ const HOTSPOTS: Record<string, Array<{ n: number; x: number; y: number }>> = {
 function SchematicLab({ requested }: { requested: LicenseClass }) {
   const search = useSearchParams();
   const asked = questionByQuery(search.get("q"));
+  const extraFigures = ["E6-1", "E6-2", "E6-3", "E7-1", "E7-2"];
   const figures = requested === "technician" ? ["T-1", "T-2", "T-3"] : ["T-1", "T-2", "T-3", "G7-1"];
+  if (classAtLeast(requested, "extra") || (asked?.figure != null && extraFigures.includes(asked.figure))) {
+    for (const id of extraFigures) {
+      if (!figures.includes(id)) figures.push(id);
+    }
+  }
   const initialFigure = asked?.figure && figures.includes(asked.figure) ? asked.figure : figures[0]!;
   const [figure, setFigure] = useState(initialFigure);
-  const pool = figure.startsWith("G") ? getPool("general") : getPool("technician");
+  const pool = figure.startsWith("E") ? getPool("extra") : figure.startsWith("G") ? getPool("general") : getPool("technician");
   const questions = pool.questions.filter((question) => question.figure === figure);
   const [index, setIndex] = useState(() => {
     const start = questions.findIndex((item) => item.id === asked?.id);
@@ -401,6 +419,8 @@ function AntennaLab({ requested, showFormula, poke }: { requested: LicenseClass;
           <p>This pattern question uses the official figure. The wavelength shop is still here for the length questions.</p>
         </div>
       ) : null}
+      {search.get("yagi") === "1" ? <YagiPicture /> : null}
+      {search.get("array") === "1" ? <ArrayPicture poke={poke} /> : null}
       <Field label="Frequency, MHz" value={mhz} testId="antenna-mhz" onChange={update} />
       <output className="num block text-4xl sm:text-5xl" data-testid="antenna-wavelength">{round(wavelength)} m</output>
       <p>That is one wavelength. Higher frequency, shorter wave. A half-wave dipole radiates strongest broadside to the wire.</p>
@@ -639,6 +659,119 @@ function PhasorLab({ showFormula, poke }: { showFormula: boolean; poke: () => vo
       <p>Resistance runs one way on figure E5-1 and reactance the other. A series capacitor sits below the resistance axis.</p>
       {showFormula ? <p>Magnitude is √(R² + X²). The angle is arctan(X / R).</p> : null}
     </section>
+  );
+}
+
+function BandwidthLab({ showFormula, poke }: { showFormula: boolean; poke: () => void }) {
+  const search = useSearchParams();
+  const asked = questionByQuery(search.get("q"));
+  const parsedDeviation = asked ? parseKhz(asked.text, "deviation") : null;
+  const parsedAudio = asked ? parseKhz(asked.text, "audio") : null;
+  const repeater = asked?.id === "T8A09";
+  const [deviation, setDeviation] = useState(parsedDeviation ?? 5);
+  const [audio, setAudio] = useState(parsedAudio ?? (repeater ? 2.5 : 3));
+  const fm = 2 * (deviation + audio);
+  const index = audio === 0 ? 0 : deviation / audio;
+  const scale = Math.max(fm, 3, 0.15);
+  return (
+    <section className="space-y-5">
+      <h1 className="display text-4xl sm:text-5xl">Occupied bandwidth</h1>
+      <p className="text-xl">The same carrier can occupy a sliver, a voice channel, or a wide FM channel.</p>
+      <div className="space-y-3 rounded-3xl border border-line bg-card p-4">
+        <Strip label="CW" width={barWidth(0.15, scale)} tone="bg-walnut" note="About 150 Hz" />
+        <Strip label="SSB" width={barWidth(3, scale)} tone="bg-sage" note="About 3 kHz" />
+        <Strip label="FM" width={barWidth(fm, scale)} tone="bg-amber-deep" note={`${round(fm)} kHz`} />
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <Field label="FM deviation, kHz" value={deviation} onChange={(value) => { setDeviation(value); poke(); }} />
+        <Field label="Audio frequency, kHz" value={audio} onChange={(value) => { setAudio(value); poke(); }} />
+      </div>
+      <output className="num block text-4xl" data-testid="bandwidth-readout">{round(fm)} kHz</output>
+      <output className="num block text-2xl" data-testid="bandwidth-index">Deviation ÷ audio = {audio === 0 ? "—" : round(index)}</output>
+      {asked?.id === "T8A09" ? <p>Repeater FM voice is about 10–15 kHz.</p> : null}
+      {asked?.id === "T8A10" ? <p>Fast-scan TV is about 6 MHz.</p> : null}
+      {showFormula ? <p>FM bandwidth is twice the sum of the deviation and the highest audio frequency. The modulation index is the deviation divided by that audio frequency.</p> : <p className="text-ink-soft">Move a value and the formula appears.</p>}
+    </section>
+  );
+}
+
+function barWidth(kHz: number, scale: number): string {
+  const share = scale === 0 ? 0 : (kHz / scale) * 100;
+  return `${Math.min(100, Math.max(share, kHz < 1 ? 2 : 0))}%`;
+}
+
+function parseKhz(text: string, kind: "deviation" | "audio"): number | null {
+  const source = text.replace(/±/g, "plus or minus");
+  const match = kind === "audio"
+    ? source.match(/highest modulat(?:ing|ion) frequency(?:\s+is)?\s+([\d.]+)\s*(kHz|Hz)/i) ?? source.match(/([\d.]+)\s*(kHz|Hz)\s+(?:modulating|audio)/i)
+    : source.match(/deviation of\s+(?:plus or minus\s+)?([\d.]+)\s*(kHz|Hz)/i)
+      ?? source.match(/(?:frequency swing of\s+)?plus or minus\s+([\d.]+)\s*(kHz|Hz)/i)
+      ?? source.match(/([\d.]+)\s*(kHz|Hz)\s+(?:either side|deviation)/i);
+  if (!match) return null;
+  const value = Number(match[1]);
+  if (!Number.isFinite(value)) return null;
+  return /khz/i.test(match[2] ?? "") ? value : value / 1000;
+}
+
+function Strip({ label, width, tone, note }: { label: string; width: string; tone: string; note: string }) {
+  return (
+    <div className="grid grid-cols-[4rem_1fr_auto] items-center gap-3">
+      <span>{label}</span>
+      <span className="block h-6 rounded-full bg-paper-deep">
+        <span className={`block h-6 rounded-full ${tone}`} style={{ width }} />
+      </span>
+      <span className="num text-sm text-ink-soft">{note}</span>
+    </div>
+  );
+}
+
+function YagiPicture() {
+  return (
+    <div className="rounded-3xl border border-line bg-card p-4">
+      <h2 className="display text-3xl">A three-element Yagi</h2>
+      <svg viewBox="0 0 360 160" className="mt-3 w-full" role="img" aria-label="A reflector longer than the driven element, and a director shorter, with the lobe pointing at the director">
+        <line x1="70" y1="20" x2="70" y2="140" stroke="#2a211c" strokeWidth="6" />
+        <line x1="170" y1="36" x2="170" y2="124" stroke="#c47a2c" strokeWidth="6" />
+        <line x1="270" y1="52" x2="270" y2="108" stroke="#3f6b4e" strokeWidth="6" />
+        <line x1="70" y1="80" x2="270" y2="80" stroke="#5c4e45" strokeWidth="2" />
+        <polygon points="310,80 286,70 286,90" fill="#1e3a5f" />
+      </svg>
+      <p className="mt-2">The reflector is the long element. The director is the short one. The lobe points toward the director.</p>
+    </div>
+  );
+}
+
+function ArrayPicture({ poke }: { poke: () => void }) {
+  const asked = questionByQuery(useSearchParams().get("q"));
+  const start = asked?.id === "E9C01" ? { spacing: "half" as const, phase: 180 as const } : asked?.id === "E9C02" ? { spacing: "quarter" as const, phase: 90 as const } : { spacing: "half" as const, phase: 0 as const };
+  const [spacing, setSpacing] = useState<"half" | "quarter">(start.spacing);
+  const [phase, setPhase] = useState<0 | 90 | 180>(start.phase);
+  const picture =
+    spacing === "half" && phase === 0
+      ? "A figure-eight broadside to the line of the verticals."
+      : spacing === "half" && phase === 180
+        ? "A figure-eight along the line of the verticals."
+        : spacing === "quarter" && phase === 90
+          ? "A cardioid, one direction favored."
+          : "That spacing and phase is not one of the three exam pictures.";
+  return (
+    <div className="rounded-3xl border border-line bg-card p-4">
+      <h2 className="display text-3xl">Two verticals</h2>
+      <div className="mt-3 flex items-end gap-16">
+        <span className="block h-24 w-2 bg-walnut" />
+        <span className="block h-24 w-2 bg-walnut" />
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button type="button" className={`min-h-11 rounded-full px-4 ${spacing === "half" ? "bg-walnut text-paper" : "border border-line"}`} onClick={() => { setSpacing("half"); poke(); }}>Half wave apart</button>
+        <button type="button" className={`min-h-11 rounded-full px-4 ${spacing === "quarter" ? "bg-walnut text-paper" : "border border-line"}`} onClick={() => { setSpacing("quarter"); poke(); }}>Quarter wave apart</button>
+        {([0, 90, 180] as const).map((value) => (
+          <button key={value} type="button" className={`min-h-11 rounded-full px-4 ${phase === value ? "bg-walnut text-paper" : "border border-line"}`} onClick={() => { setPhase(value); poke(); }}>
+            {value}° phase
+          </button>
+        ))}
+      </div>
+      <p className="mt-3">{picture}</p>
+    </div>
   );
 }
 

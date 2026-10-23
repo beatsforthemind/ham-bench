@@ -1,4 +1,4 @@
-import { labForQuestion } from "./explain";
+import { labExtras, labForQuestion } from "./lanes";
 import type { PoolQuestion } from "./pool-types";
 
 export type BenchPreset = {
@@ -30,7 +30,7 @@ function amount(raw: string): number {
 
 export function presetFromQuestion(question: PoolQuestion): BenchPreset {
   const text = question.text;
-  const lab = labForQuestion(question.id, question.group);
+  const lab = labForQuestion(question.id, question.group, question.lane);
   const preset: BenchPreset = {};
   const resistance = text.match(/current of ([\d.]+) amperes? flows when connected to ([\d.]+) volts/i);
   const applied = text.match(/applied voltage is ([\d.]+) volts and the current flow is ([\d.]+) amperes?/i);
@@ -127,6 +127,21 @@ export function presetFromQuestion(question: PoolQuestion): BenchPreset {
     preset.microfarad = Number(rc[1]) * 2;
     preset.ohms = (Number(rc[2]) * 1e6) / 2;
   }
+  const supplied = text.match(/([\d,.]+)\s*VDC is supplied to an ([\d,.]+)-ohm load/i);
+  if (supplied) {
+    preset.volts = amount(supplied[1]!);
+    preset.ohms = amount(supplied[2]!);
+  }
+  const bulb = text.match(/([\d,.]+)\s*VDC light bulb that draws ([\d.]+) amperes?/i);
+  if (bulb) {
+    preset.volts = amount(bulb[1]!);
+    preset.amps = Number(bulb[2]);
+  }
+  const milli = text.match(/current of ([\d.]+) milliamperes flows through a ([\d,.]+)-ohm/i);
+  if (milli) {
+    preset.amps = Number(milli[1]) / 1000;
+    preset.ohms = amount(milli[2]!);
+  }
   const erp = text.match(/([\d.]+) watts transmitter power output/i);
   if (erp && /effective radiated power|effective isotropic radiated power|\bERP\b|\bEIRP\b/i.test(text)) {
     preset.watts = Number(erp[1]);
@@ -143,15 +158,15 @@ const QUERY_NAME: Partial<Record<keyof BenchPreset, string>> = {
 };
 
 export function labHref(question: PoolQuestion, licenseClass: string): string | null {
-  const lab = labForQuestion(question.id, question.group);
+  const lab = labForQuestion(question.id, question.group, question.lane);
   if (!lab) return null;
   const params = new URLSearchParams({ class: licenseClass, q: question.id });
+  for (const [key, value] of Object.entries(labExtras(question.id))) params.set(key, value);
   const preset = presetFromQuestion(question);
   for (const [key, value] of Object.entries(preset)) {
     if (typeof value === "number" && Number.isFinite(value)) {
       params.set(QUERY_NAME[key as keyof BenchPreset] ?? key, String(value));
     }
   }
-  const path = lab === "bands" ? "/bands" : `/labs/${lab}`;
-  return `${path}?${params.toString()}`;
+  return `/labs/${lab}?${params.toString()}`;
 }

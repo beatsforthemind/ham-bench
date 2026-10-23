@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { createExam, hashSeed } from "@/lib/exam";
-import { labHref } from "@/lib/presets";
 import { isLicenseClass, poolForToday, questionById } from "@/lib/pools";
+import { missReview } from "@/lib/teach";
 import { emptySession, paperKey, type ExamSession } from "@/lib/session";
 import { FigureView } from "./figure";
 import { useBench } from "./bench-provider";
@@ -153,19 +153,28 @@ export function ExamRoom() {
             if (!question) return null;
             const index = active.paper.questionIds.indexOf(id);
             const chosen = active.answers[index];
-            const href = labHref(question, license);
+            const review = missReview(question, license, pool.groups.find((group) => group.id === question.group)?.title ?? question.group);
             return (
               <li key={id} className="rounded-2xl border border-line bg-card p-4">
-                <p className="text-sm text-ink-soft">{id}</p>
+                <p className="text-sm uppercase tracking-widest text-ink-soft">
+                  {review.kicker} · {id}
+                </p>
                 <p>{question.text}</p>
                 {question.figure ? <FigureView id={question.figure} hidden={false} /> : null}
+                <p className="mt-2">{review.fact}</p>
                 <p className="mt-2">The matching choice is “{question.answers[question.correctIndex]}.”</p>
                 {chosen == null ? <p>No answer was marked.</p> : chosen !== question.correctIndex ? <p>{question.distractors[chosen]}</p> : null}
-                {href ? (
-                  <Link href={href} className="mt-3 inline-flex min-h-11 items-center rounded-full bg-walnut px-4 text-paper">
-                    Try it on the bench
+                {question.refs ? <p className="text-ink-soft">The pool cites {question.refs.replace(/[[\]]/g, "")}.</p> : null}
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {review.href && review.hrefLabel ? (
+                    <Link href={review.href} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 text-paper">
+                      {review.hrefLabel}
+                    </Link>
+                  ) : null}
+                  <Link href={`/license/${license}/practice?q=${question.id}`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
+                    Practice this question
                   </Link>
-                ) : null}
+                </div>
               </li>
             );
           })}

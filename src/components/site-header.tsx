@@ -43,15 +43,6 @@ export function SiteHeader() {
               ))}
             </select>
           </label>
-          <label className="flex min-h-11 items-center gap-2 text-sm text-ink-soft">
-            <input
-              type="checkbox"
-              checked={settings.fastLane}
-              disabled={!ready}
-              onChange={(event) => setSettings({ fastLane: event.target.checked })}
-            />
-            Fast lane
-          </label>
         </div>
       </div>
     </header>

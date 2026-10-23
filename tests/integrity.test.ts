@@ -7,7 +7,9 @@ import { legalOn } from "@/lib/bands";
 import { createExam, practiceOrder, scoreExam } from "@/lib/exam";
 import { EXPECTED_FIGURES, FIGURE_ASSETS, LIVE_COUNTS, WITHDRAWN } from "@/lib/pool-facts";
 import { pools, registry } from "@/lib/pools";
-import { presetFromQuestion } from "@/lib/presets";
+import { cardFact, ideaBeforeAnswer, missReview } from "@/lib/teach";
+import { chartHref } from "@/lib/lanes";
+import { presetFromQuestion, labHref } from "@/lib/presets";
 import { groupStatus, readyToTest, recordAnswer, recordExam, EMPTY_PROGRESS } from "@/lib/readiness";
 import { commitScore, emptySession } from "@/lib/session";
 import { parseStored, progressSchema, settingsSchema } from "@/lib/storage";
@@ -260,5 +262,95 @@ describe("readiness and storage", () => {
     expect(legalOn(14.3, "general", "phone").allowed).toBe(true);
     expect(legalOn(7.05, "technician", "cw").allowed).toBe(true);
     expect(legalOn(7.05, "technician", "phone").allowed).toBe(false);
+  });
+});
+
+describe("learning lanes", () => {
+  // Twelve name, unit, and mode questions moved from ideas to cards.
+  const counts = {
+    technician: { card: 180, bench: 229 },
+    general: { card: 175, bench: 248 },
+    extra: { card: 196, bench: 403 },
+  } as const;
+
+  it("locks the card and idea shelves", () => {
+    for (const [name, expected] of Object.entries(counts)) {
+      const pool = pools[name as keyof typeof pools];
+      expect(pool.questions.filter((question) => question.lane === "card")).toHaveLength(expected.card);
+      expect(pool.questions.filter((question) => question.lane === "bench")).toHaveLength(expected.bench);
+    }
+  });
+
+  it("keeps figures as ideas and cards off the concept benches", () => {
+    for (const pool of Object.values(pools)) {
+      for (const question of pool.questions) {
+        if (question.figure) expect(question.lane, question.id).toBe("bench");
+        if (question.lane === "card") expect(question.lab, question.id).toBeNull();
+        const answer = question.answers[question.correctIndex] ?? "";
+        if (question.lane === "card") {
+          expect(cardFact(answer), question.id).toContain(answer.trim().replace(/\.$/, ""));
+          expect(question.distractors.join(" ")).not.toContain("does not answer this question");
+        } else {
+          const title = pool.groups.find((group) => group.id === question.group)?.title ?? question.group;
+          const last = question.workedSteps.at(-1);
+          const idea = ideaBeforeAnswer(question, title, question.workedSteps);
+          if (last) expect(idea, question.id).not.toContain(last);
+          expect(question.distractors.join(" ")).not.toContain("does not answer this question");
+        }
+      }
+    }
+    const question = (id: string) => Object.values(pools).flatMap((pool) => pool.questions).find((item) => item.id === id)!;
+    expect(question("T7D08").lane).toBe("card");
+    expect(question("T7D09").lane).toBe("card");
+    expect(question("T8A01").lane).toBe("card");
+    expect(question("T8A01").lab).toBeNull();
+    expect(question("G5B03").lab).toBe("ohms");
+    expect(labHref(question("G5B03"), "general")).toContain("volts=400");
+    expect(labHref(question("G5B03"), "general")).toContain("ohms=800");
+    expect(labHref(question("G5B04"), "general")).toContain("amps=0.2");
+    expect(labHref(question("G5B05"), "general")).toContain("amps=0.007");
+    expect(question("G5C01").lab).toBeNull();
+    expect(question("G5C03").lab).toBe("dividers");
+    expect(question("G8B07").lab).toBeNull();
+    expect(question("E9A12").lab).toBe("decibels");
+    expect(labHref(question("E9D05"), "extra")).toContain("yagi=1");
+    expect(labHref(question("T7D02"), "technician")).toContain("leads=1");
+    expect(labHref(question("T8A08"), "technician")).toContain("/labs/bandwidth");
+    expect(labHref(question("G9C01"), "general")).toContain("yagi=1");
+    expect(labHref(question("E9C01"), "extra")).toContain("array=1");
+    expect(question("E6A10").lab).toBe("schematics");
+    expect(chartHref("T8A06", "T8A", "technician")).toContain("sideband=usb");
+    expect(chartHref("G4D08", "G4D", "general")).toContain("sideband=lsb");
+    const g9 = pools.general.questions.find((item) => item.id === "G9A09")!;
+    const g9Title = pools.general.groups.find((group) => group.id === "G9A")?.title ?? "G9A";
+    expect(ideaBeforeAnswer(g9, g9Title, g9.workedSteps).toLowerCase()).not.toContain("4:1");
+    const smith = pools.extra.questions.find((item) => item.id === "E9G07")!;
+    const smithTitle = pools.extra.groups.find((group) => group.id === "E9G")?.title ?? "E9G";
+    expect(ideaBeforeAnswer(smith, smithTitle, smith.workedSteps).toLowerCase()).not.toContain("resistance axis");
+    const side = missReview(pools.general.questions.find((item) => item.id === "G4D08")!, "general", "Amateur practices");
+    expect(side.hrefLabel).toBe("Open the band chart");
+    expect(labHref(question("T5C09"), "technician") ?? "").toMatch(/volts=|amps=/);
+  });
+
+  it("exposes a lane only after a mock is turned in", () => {
+    const source = readFileSync(path.join(root, "src/components/exam-room.tsx"), "utf8");
+    const live = source.split("const id = active.paper.questionIds")[1] ?? "";
+    expect(source).toContain("missReview");
+    expect(source).not.toContain("cardFact");
+    expect(source).not.toContain("ideaBeforeAnswer");
+    expect(live).not.toContain("missReview");
+    expect(live).not.toContain("exam-fact");
+    expect(live).not.toContain("For the exam");
+    expect(live).not.toContain("question.lane");
+    const card = pools.technician.questions.find((question) => question.id === "T2A01")!;
+    const review = missReview(card, "technician", "Operating Procedures");
+    expect(review.lane).toBe("card");
+    expect(review.fact).toContain(card.answers[card.correctIndex] ?? "");
+    const idea = pools.technician.questions.find((question) => question.id === "T5D11")!;
+    const ideaReview = missReview(idea, "technician", "Ohm’s law");
+    expect(ideaReview.lane).toBe("bench");
+    expect(ideaReview.href).toContain("/labs/ohms");
+    const last = idea.workedSteps.at(-1);
+    if (last) expect(ideaReview.fact).not.toContain(last);
   });
 });

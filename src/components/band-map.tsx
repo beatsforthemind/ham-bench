@@ -14,10 +14,12 @@ export function BandMap() {
   const { ready } = useBench();
   const search = useSearchParams();
   if (!ready) return <p>Opening the band map.</p>;
-  return <BandMapReady classQuery={search.get("class")} mhzQuery={search.get("mhz")} />;
+  const rawSideband = search.get("sideband");
+  const sideband = rawSideband === "lsb" ? "lsb" : rawSideband === "usb" || rawSideband === "3" ? "usb" : null;
+  return <BandMapReady classQuery={search.get("class")} mhzQuery={search.get("mhz")} sideband={sideband} />;
 }
 
-function BandMapReady({ classQuery, mhzQuery }: { classQuery: string | null; mhzQuery: string | null }) {
+function BandMapReady({ classQuery, mhzQuery, sideband }: { classQuery: string | null; mhzQuery: string | null; sideband: "usb" | "lsb" | null }) {
   const { settings, setFrequency } = useBench();
   const [bandId, setBandId] = useState<(typeof EXAM_BANDS)[number]["id"]>("10");
   const initialClass = classQuery && isLicenseClass(classQuery) ? classQuery : settings.studyClass;
@@ -76,6 +78,7 @@ function BandMapReady({ classQuery, mhzQuery }: { classQuery: string | null; mhz
           </div>
         ))}
         <p className="text-sm text-ink-soft">Amber is phone. Green is data or RTTY. Walnut is CW only. A class also keeps the privileges of the rows below it.</p>
+        {sideband ? <SidebandStrip kind={sideband} /> : null}
       </div>
       <ul className="space-y-2">
         {rows.flat().map((segment) => {
@@ -149,6 +152,24 @@ function BandMapReady({ classQuery, mhzQuery }: { classQuery: string | null; mhz
           <li key={item.text}>{item.text}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function SidebandStrip({ kind }: { kind: "usb" | "lsb" }) {
+  const lower = kind === "lsb";
+  return (
+    <div className="space-y-2 border-t border-line pt-3">
+      <h2 className="text-xl">A 3 kHz sideband</h2>
+      <div className="relative h-10 rounded-full bg-paper" aria-hidden="true">
+        <span className="absolute top-2 h-6 rounded-full bg-amber-deep" style={{ left: lower ? "26%" : "42%", width: "16%" }} />
+        <span className="absolute top-1 h-8 w-0.5 bg-ink" style={{ left: "42%" }} />
+      </div>
+      <p>
+        {lower
+          ? "The mark is the carrier. The shade is about 3 kHz of lower sideband, below the carrier. The carrier sits at least a full signal-width above the lower edge."
+          : "The mark is the carrier. The shade is about 3 kHz of upper sideband. The whole signal has to stay inside the segment, so the carrier sits a full signal-width inside the band edge."}
+      </p>
     </div>
   );
 }

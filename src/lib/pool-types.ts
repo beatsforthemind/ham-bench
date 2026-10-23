@@ -15,6 +15,7 @@ export type PoolQuestion = {
   distractors: [string, string, string, string];
   workedSteps: string[];
   lab: string | null;
+  lane: "card" | "bench";
 };
 
 export type PoolGroup = {

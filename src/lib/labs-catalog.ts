@@ -16,6 +16,7 @@ export const LAB_SLUGS = [
   "time",
   "phasors",
   "smith",
+  "bandwidth",
 ] as const;
 
 export type LabSlug = (typeof LAB_SLUGS)[number];
@@ -43,6 +44,7 @@ export const LABS: LabMeta[] = [
   { slug: "time", title: "Time constant", summary: "One time constant takes a capacitor to about 63 percent.", min: "extra" },
   { slug: "phasors", title: "Phasors", summary: "Rectangular R and X become a magnitude and an angle, next to figure E5-1.", min: "extra" },
   { slug: "smith", title: "Smith chart", summary: "The official E9-3 chart. Infinity is on the right. The only straight line is resistance.", min: "extra" },
+  { slug: "bandwidth", title: "Occupied bandwidth", summary: "CW, then SSB, then FM. FM width is twice the sum of the deviation and the highest audio frequency.", min: "technician" },
 ];
 
 export function labBySlug(slug: string): LabMeta | undefined {

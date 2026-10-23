@@ -18,18 +18,18 @@ export const CLASS_INFO: Record<
     name: "Technician",
     element: "Element 2",
     tone: "text-sage",
-    summary: "A Technician can miss nine questions and still pass. Only a couple of those thirty-five are math.",
+    summary: "The paper mixes exam cards and radio ideas. Benches teach the ideas. Cards lead with the fact.",
   },
   general: {
     name: "General",
     element: "Element 3",
     tone: "text-brass",
-    summary: "General adds HF privileges and the next layer of circuits: reactance, decibels, dividers, and the dipole formula in feet.",
+    summary: "General adds HF privileges and the next layer of circuits. The paper mixes exam cards and radio ideas.",
   },
   extra: {
     name: "Extra",
     element: "Element 4",
     tone: "text-extra",
-    summary: "Extra is the long paper. Resonance, time constants, phasors, and the Smith chart are where the picture helps.",
+    summary: "Extra is the long paper. Resonance, time constants, phasors, and the Smith chart are the ideas. The paper mixes those with exam cards.",
   },
 };

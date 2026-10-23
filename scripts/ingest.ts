@@ -3,7 +3,9 @@ import { mkdir, readFile, writeFile, cp } from "node:fs/promises";
 import path from "node:path";
 import mammoth from "mammoth";
 import { GROUP_TITLES, SUBELEMENT_TITLES } from "./catalog";
-import { explainQuestion, labForQuestion } from "../src/lib/explain";
+import { explainQuestion } from "../src/lib/explain";
+import { LANE_STEMS } from "../src/lib/lane-stems";
+import { LANE_FLIP, groupDefault, labForQuestion, laneFor } from "../src/lib/lanes";
 import { ERRATA_STEMS, EXPECTED_FIGURES, MIRROR_COMMIT, WITHDRAWN } from "../src/lib/pool-facts";
 import type { LicenseClass, PoolFile, PoolQuestion, PoolRegistry } from "../src/lib/pool-types";
 import { workedSteps } from "../src/lib/worked";
@@ -255,6 +257,15 @@ async function buildPool(spec: SourceSpec): Promise<PoolFile> {
       fail(`${item.id} figure is ${figure ?? "none"}, expected ${expected ?? "none"}`);
     }
     const group = groupOf(item.id);
+    const lane = laneFor(item.id, group, figure);
+    const flip = LANE_FLIP[item.id];
+    if (flip && figure && flip === "card") fail(`${item.id} is a figure question, so it stays an idea`);
+    if (flip && flip === groupDefault(group)) fail(`${item.id} flip matches the ${group} default`);
+    const stemHint = LANE_STEMS[item.id];
+    if (flip && !stemHint) fail(`${item.id} is a lane exception without a stem check`);
+    if (stemHint && normalize(fromDocx.text) !== stemHint) {
+      fail(`${item.id} stem no longer matches the lane exception`);
+    }
     const steps = workedSteps(item.id, fromDocx.text, fromDocx.answers);
     const explanation = explainQuestion(
       {
@@ -266,6 +277,7 @@ async function buildPool(spec: SourceSpec): Promise<PoolFile> {
       },
       GROUP_TITLES[group] ?? group,
       steps,
+      lane,
     );
     questions.push({
       id: item.id,
@@ -279,8 +291,16 @@ async function buildPool(spec: SourceSpec): Promise<PoolFile> {
       correctExplanation: explanation.correctExplanation,
       distractors: explanation.distractors,
       workedSteps: steps,
-      lab: labForQuestion(item.id, group),
+      lab: labForQuestion(item.id, group, lane),
+      lane,
     });
+  }
+
+  for (const id of Object.keys(LANE_FLIP)) {
+    const prefix = spec.licenseClass === "technician" ? "T" : spec.licenseClass === "general" ? "G" : "E";
+    if (!id.startsWith(prefix)) continue;
+    if (!questions.some((question) => question.id === id)) fail(`${id} is a lane exception and is not in the ${spec.licenseClass} pool`);
+    if (!LANE_STEMS[id]) fail(`${id} is a lane exception without a stem check`);
   }
 
   for (const [id, stem] of Object.entries(ERRATA_STEMS)) {

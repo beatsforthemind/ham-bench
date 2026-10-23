@@ -9,7 +9,7 @@ export default function HomePage() {
       <header className="max-w-3xl space-y-4">
         <p className="text-sm uppercase tracking-[0.2em] text-ink-soft">Amateur radio practice</p>
         <h1 className="display text-4xl text-walnut sm:text-6xl">The license is earned in the room. This is the bench.</h1>
-        <p className="text-2xl leading-snug">A Technician can miss nine questions and still pass. Only a couple of those thirty-five are math.</p>
+        <p className="text-2xl leading-snug">The paper mixes facts you recognize and ideas you can picture. The benches are for the ideas.</p>
         <p className="text-lg text-ink-soft">
           Ready to test means 80% or better on five mock exams in a row, every question in the pool seen at least once, and no subelement left under a passing share of its groups.
         </p>

@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { CLASS_INFO } from "@/lib/class-info";
-import { labForQuestion } from "@/lib/explain";
+import { labBySlug } from "@/lib/labs-catalog";
 import { groupStatus, readyToTest, type GroupStatus } from "@/lib/readiness";
 import { poolForToday } from "@/lib/pools";
-import type { LicenseClass } from "@/lib/pool-types";
+import type { LicenseClass, PoolFile, PoolGroup } from "@/lib/pool-types";
 import { useBench } from "./bench-provider";
 
 const STATUS_LABEL: Record<GroupStatus, string> = {
@@ -15,35 +15,91 @@ const STATUS_LABEL: Record<GroupStatus, string> = {
   solid: "Solid",
 };
 
+function laneCount(pool: PoolFile, group: PoolGroup, lane: "card" | "bench"): number {
+  return pool.questions.filter((question) => question.group === group.id && question.lane === lane).length;
+}
+
+function laneLabel(count: number, lane: "card" | "bench"): string {
+  if (lane === "card") return count === 1 ? "1 card" : `${count} cards`;
+  return count === 1 ? "1 idea" : `${count} ideas`;
+}
+
 export function Syllabus({ licenseClass }: { licenseClass: LicenseClass }) {
   const { progress } = useBench();
   const pool = poolForToday(licenseClass);
   if (!pool) return <p>This pool is not in force, so the study map stays closed.</p>;
+  const cards = pool.questions.filter((question) => question.lane === "card");
+  const ideas = pool.questions.filter((question) => question.lane === "bench");
+  const ideaGroups = pool.groups.filter((group) => laneCount(pool, group, "bench") > 0);
+  const cardGroups = pool.groups.filter((group) => laneCount(pool, group, "card") > 0);
+  const labCounts = new Map<string, number>();
+  for (const question of ideas) {
+    if (!question.lab) continue;
+    labCounts.set(question.lab, (labCounts.get(question.lab) ?? 0) + 1);
+  }
   return (
-    <div className="space-y-8">
-      {pool.subelements.map((subelement) => (
-        <section key={subelement.id}>
-          <h2 className="display text-3xl">
-            {subelement.id} · {subelement.title}
-          </h2>
-          <p className="text-ink-soft">{subelement.examQuestions} exam questions, one from each group.</p>
-          <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-card">
-            {pool.groups
-              .filter((group) => group.subelement === subelement.id)
-              .map((group) => {
-                const status = groupStatus(pool, progress, group.id);
-                return (
-                  <li key={group.id} className="flex flex-wrap items-center justify-between gap-3">
-                    <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`} className="inline-flex min-h-11 items-center px-4 py-3 text-lg">
-                      <span className="num text-ink-soft">{group.id}</span> {group.title}
+    <div className="space-y-10">
+      <section className="space-y-4">
+        <h2 className="display text-4xl">On the air</h2>
+        <p className="text-xl">
+          {ideas.length} radio ideas across {ideaGroups.length} groups. Learn the idea once, then the letter follows.
+        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          {[...labCounts.entries()].map(([slug, count]) => {
+            const lab = labBySlug(slug);
+            return (
+              <Link key={slug} href={`/labs/${slug}?class=${licenseClass}`} className="rounded-3xl border border-line bg-card p-4 no-underline">
+                <h3 className="display text-2xl">{lab?.title ?? slug}</h3>
+                <p className="mt-1 text-ink-soft">{lab?.summary}</p>
+                <p className="num mt-2 text-sm">{count} questions</p>
+              </Link>
+            );
+          })}
+        </div>
+        <ul className="divide-y divide-line rounded-2xl border border-line bg-card">
+          {ideaGroups.map((group) => {
+            const count = laneCount(pool, group, "bench");
+            const status = groupStatus(pool, progress, group.id);
+            return (
+              <li key={group.id} className="flex flex-wrap items-center justify-between gap-3">
+                <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`} className="inline-flex min-h-11 items-center px-4 py-3 text-lg">
+                  <span className="num text-ink-soft">{group.id}</span> {group.title}
+                  {count !== pool.questions.filter((question) => question.group === group.id).length ? <span className="ml-2 text-sm text-ink-soft">{laneLabel(count, "bench")}</span> : null}
+                </Link>
+                <span className="px-4 text-sm uppercase tracking-wide text-ink-soft">{STATUS_LABEL[status]}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+      <section className="space-y-4">
+        <h2 className="display text-4xl">For the exam</h2>
+        <p className="text-xl">
+          {cards.length} cards in {cardGroups.length} groups. A mock still draws one question from every group, so the paper mixes both shelves.
+        </p>
+        <ul className="divide-y divide-line rounded-2xl border border-line bg-card">
+          {cardGroups.map((group) => {
+            const count = laneCount(pool, group, "card");
+            const status = groupStatus(pool, progress, group.id);
+            return (
+              <li key={group.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2">
+                <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`} className="inline-flex min-h-11 items-center text-lg">
+                  <span className="num text-ink-soft">{group.id}</span> {group.title}
+                  {count !== pool.questions.filter((question) => question.group === group.id).length ? <span className="ml-2 text-sm text-ink-soft">{laneLabel(count, "card")}</span> : null}
+                </Link>
+                <span className="flex items-center gap-3">
+                  {["T1B", "G1A", "E1A"].includes(group.id) ? (
+                    <Link href={`/bands?class=${licenseClass}`} className="inline-flex min-h-11 items-center text-sm uppercase tracking-wide text-ink-soft">
+                      Chart
                     </Link>
-                    <span className="text-sm uppercase tracking-wide text-ink-soft">{STATUS_LABEL[status]}</span>
-                  </li>
-                );
-              })}
-          </ul>
-        </section>
-      ))}
+                  ) : null}
+                  <span className="text-sm uppercase tracking-wide text-ink-soft">{STATUS_LABEL[status]}</span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
 }
@@ -67,12 +123,13 @@ export function ProgressBoard() {
           const status = groupStatus(pool, progress, group.id);
           return status === "unseen" || status === "shaky";
         });
+        const coldCards = cold.filter((group) => pool.questions.some((question) => question.group === group.id && question.lane === "card"));
+        const coldIdeas = cold.filter((group) => pool.questions.some((question) => question.group === group.id && question.lane === "bench"));
         const labCounts = new Map<string, number>();
-        for (const group of cold) {
-          const sample = pool.questions.find((question) => question.group === group.id);
-          const lab = sample ? labForQuestion(sample.id, sample.group) : null;
-          if (!lab || lab === "bands") continue;
-          labCounts.set(lab, (labCounts.get(lab) ?? 0) + 1);
+        for (const group of coldIdeas) {
+          for (const question of pool.questions.filter((item) => item.group === group.id && item.lane === "bench" && item.lab)) {
+            labCounts.set(question.lab!, (labCounts.get(question.lab!) ?? 0) + 1);
+          }
         }
         const labs = [...labCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
         const verdict = readyToTest(pool, progress);
@@ -87,16 +144,27 @@ export function ProgressBoard() {
                 ))}
               </ul>
             ) : null}
-            <h3 className="mt-6 text-xl">Cold groups</h3>
+            <h3 className="mt-6 text-xl">Cold exam cards</h3>
             <ul className="mt-2 space-y-1">
-              {cold.slice(0, 8).map((group) => (
+              {coldCards.slice(0, 6).map((group) => (
                 <li key={group.id}>
                   <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`}>
                     {group.id} · {group.title}
                   </Link>
                 </li>
               ))}
-              {cold.length === 0 ? <li>None. Every group is learned or solid.</li> : null}
+              {coldCards.length === 0 ? <li>None.</li> : null}
+            </ul>
+            <h3 className="mt-6 text-xl">Cold radio ideas</h3>
+            <ul className="mt-2 space-y-1">
+              {coldIdeas.slice(0, 6).map((group) => (
+                <li key={group.id}>
+                  <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`}>
+                    {group.id} · {group.title}
+                  </Link>
+                </li>
+              ))}
+              {coldIdeas.length === 0 ? <li>None.</li> : null}
             </ul>
             <h3 className="mt-6 text-xl">Three labs that would warm them</h3>
             <ul className="mt-2 flex flex-wrap gap-3">
@@ -107,7 +175,8 @@ export function ProgressBoard() {
                   </Link>
                 </li>
               ))}
-              {labs.length === 0 ? <li>The cold groups are rules and operating, so the next step is another pass through the questions.</li> : null}
+              {labs.length === 0 && coldCards.length > 0 && coldIdeas.length === 0 ? <li>The cold groups are exam cards, so the next step is another pass through those facts.</li> : null}
+              {labs.length === 0 && coldIdeas.length > 0 ? <li>Practice those questions.</li> : null}
             </ul>
           </section>
         );

@@ -7,6 +7,8 @@ import { practiceOrder } from "@/lib/exam";
 import { labHref } from "@/lib/presets";
 import { isLicenseClass, poolForToday } from "@/lib/pools";
 import { statFor } from "@/lib/readiness";
+import { chartHref } from "@/lib/lanes";
+import { cardFact, conventionHook, ideaBeforeAnswer, stepsBeforeAnswer } from "@/lib/teach";
 import { FigureView } from "./figure";
 import { useBench } from "./bench-provider";
 
@@ -16,10 +18,11 @@ export function PracticeRoom() {
   const params = useParams<{ class: string }>();
   const search = useSearchParams();
   const license = isLicenseClass(params.class) ? params.class : null;
-  const { progress, ready, answerPractice, settings } = useBench();
+  const { progress, ready, answerPractice } = useBench();
   const [mark, setMark] = useState<{ id: string; index: number } | null>(null);
   const [focusTick, setFocusTick] = useState(0);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const teachRef = useRef<HTMLDivElement>(null);
   const feedbackRef = useRef<HTMLDivElement>(null);
   const choicesRef = useRef<HTMLDivElement>(null);
 
@@ -76,8 +79,8 @@ export function PracticeRoom() {
 
   useEffect(() => {
     if (focusTick === 0) return;
-    headingRef.current?.focus();
-    headingRef.current?.scrollIntoView({ block: "start" });
+    teachRef.current?.focus();
+    teachRef.current?.scrollIntoView({ block: "start" });
   }, [focusTick]);
 
   useEffect(() => {
@@ -116,16 +119,38 @@ export function PracticeRoom() {
     );
   }
 
-  const correctBefore = stat?.correct ?? 0;
-  const hide = answered || settings.fastLane ? 0 : Math.min(correctBefore, question.workedSteps.length);
-  const steps = question.workedSteps.slice(0, question.workedSteps.length - hide);
-  const href = labHref(question, license);
+  const steps = question.lane === "bench" ? (answered ? question.workedSteps : stepsBeforeAnswer(question.workedSteps)) : [];
+  const href =
+    question.lane === "bench"
+      ? labHref(question, license) ?? chartHref(question.id, question.group, license)
+      : chartHref(question.id, question.group, license);
+  const groupTitle = pool.groups.find((group) => group.id === question.group)?.title ?? question.group;
+  const citation = question.refs.replace(/[[\]]/g, "");
+  const kind = question.lane === "card" ? "exam card" : "radio idea";
 
   return (
     <article className="space-y-6">
       <p className="text-sm uppercase tracking-widest text-ink-soft">
-        {question.group} · {cursor + 1} of {deck.length} · practice shuffles the letters
+        {question.group} · {cursor + 1} of {deck.length} · {kind}
       </p>
+      {question.lane === "card" ? (
+        <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-5 outline-none" data-testid="exam-fact">
+          <p className="text-sm uppercase tracking-widest text-ink-soft">For the exam</p>
+          <p className="mt-2 text-xl">{cardFact(question.answers[question.correctIndex] ?? "")}</p>
+          {conventionHook(question.id) ? <p className="mt-2 text-ink-soft">{conventionHook(question.id)}</p> : null}
+          {citation ? <p className="mt-2 text-ink-soft">The pool cites {citation}.</p> : null}
+        </div>
+      ) : (
+        <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-5 outline-none" data-testid="idea-note">
+          <p className="text-sm uppercase tracking-widest text-ink-soft">The idea</p>
+          <p className="mt-2 text-xl">{ideaBeforeAnswer(question, groupTitle, question.workedSteps)}</p>
+          {href ? (
+            <Link href={href} className="mt-4 inline-flex min-h-11 items-center rounded-full bg-walnut px-4 text-paper">
+              {href.startsWith("/bands") ? "Open the band chart" : "Try it on the bench"}
+            </Link>
+          ) : null}
+        </div>
+      )}
       <h1 ref={headingRef} tabIndex={-1} className="text-3xl leading-snug outline-none">
         {question.text}
       </h1>
@@ -155,27 +180,22 @@ export function PracticeRoom() {
           );
         })}
       </div>
-      {question.workedSteps.length > 0 ? (
+      {steps.length > 0 ? (
         <div className="rounded-2xl bg-paper-deep p-4">
-          {steps.length > 0 ? (
-            <ol className="list-decimal space-y-1 pl-5">
-              {steps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-          ) : (
-            <p>Work this one, then check.</p>
-          )}
+          <ol className="list-decimal space-y-1 pl-5">
+            {steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
         </div>
       ) : null}
       {answered ? (
         <div ref={feedbackRef} tabIndex={-1} role="status" className="space-y-3 rounded-2xl border border-line bg-card p-5 outline-none" data-testid="feedback">
           <p className="text-xl">The matching choice is “{question.answers[question.correctIndex]}.”</p>
-          {answered.index !== question.correctIndex ? <p>{question.distractors[answered.index]}</p> : <p>{question.correctExplanation}</p>}
-          {question.refs ? <p className="text-ink-soft">The pool cites {question.refs.replace(/[[\]]/g, "")}.</p> : null}
-          {href ? (
-            <Link href={href} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 text-paper">
-              Try it on the bench
+          {answered.index !== question.correctIndex ? <p>{question.distractors[answered.index]}</p> : null}
+          {question.lane === "card" && href ? (
+            <Link href={href} className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
+              Open the band chart
             </Link>
           ) : null}
           <div>

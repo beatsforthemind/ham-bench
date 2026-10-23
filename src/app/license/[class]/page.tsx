@@ -26,7 +26,7 @@ export default async function LicensePage({ params }: { params: Promise<{ class:
       <header className="space-y-3">
         <p className={`text-sm uppercase tracking-widest ${info.tone}`}>{info.element}</p>
         <h1 className="display text-4xl sm:text-6xl">{info.name}</h1>
-        <p className="text-xl">{info.summary}</p>
+        <p className="max-w-3xl text-xl">{info.summary}</p>
         <p className="text-ink-soft">
           Pool {pool.revision}. In force {pool.effectiveFrom} through {pool.effectiveThrough}. Errata {pool.errataDate}. Pass {pool.passingCount} of {pool.examQuestions}.
         </p>

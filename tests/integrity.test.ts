@@ -7,6 +7,7 @@ import { legalOn } from "@/lib/bands";
 import { createExam, practiceOrder, scoreExam } from "@/lib/exam";
 import { EXPECTED_FIGURES, FIGURE_ASSETS, LIVE_COUNTS, WITHDRAWN } from "@/lib/pool-facts";
 import { pools, registry } from "@/lib/pools";
+import { SCENES_LEFT_BARE } from "@/lib/card-scenes";
 import { pictureStrings, questionPicture } from "@/lib/question-pictures";
 import { cardFact, cardLead, ideaBeforeAnswer, leadUsesPrivateToken, missReview } from "@/lib/teach";
 import { chartHref } from "@/lib/lanes";
@@ -422,7 +423,18 @@ describe("learning lanes", () => {
         }
       }
     }
-    expect(uncovered).toBeLessThanOrEqual(1347);
+    expect(uncovered).toBeLessThanOrEqual(1113);
+    const reverse = pools.technician.questions.find((question) => question.id === "T2B01")!;
+    expect(cardLead(reverse)).toContain("tower");
+    expect(cardLead(reverse)?.toLowerCase()).not.toContain("input");
+    expect(questionPicture("T2B01")?.kind).toBe("scene");
+    const music = pools.technician.questions.find((question) => question.id === "T1D04")!;
+    expect(cardLead(music)?.toLowerCase()).toContain("crewed");
+    expect(cardLead(music)?.toLowerCase()).not.toContain("spacecraft");
+    const ft8 = pools.technician.questions.find((question) => question.id === "T8D02")!;
+    expect(cardLead(ft8)?.toLowerCase()).toContain("trace");
+    expect(cardLead(ft8)?.toLowerCase()).not.toContain("signal-to-noise");
+    for (const id of SCENES_LEFT_BARE) expect(questionPicture(id), id).toBeNull();
     const bench = (id: string) => {
       const picture = questionPicture(id);
       expect(picture?.kind, id).toBe("bench");

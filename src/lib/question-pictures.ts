@@ -1,4 +1,5 @@
 import { CARD_MEMORIES } from "./card-memories";
+import { CARD_SCENES, type ScenePicture } from "./card-scenes";
 
 /**
  * A picture plus a short caption for one question.
@@ -84,7 +85,9 @@ type PairPicture = { kind: "pair"; pair: readonly [SceneId, SceneId]; caption: s
 type BandPicture = { kind: "band"; band: BandId; caption: string; labels: readonly [string] } & Painted;
 type BenchPicture = { kind: "bench"; bench: BenchId; caption: string; labels: readonly [string] } & Painted;
 
-export type PictureSpec = RailsPicture | SymbolPicture | PairPicture | BandPicture | BenchPicture;
+export type { SceneGlyph, SceneLayout, ScenePicture, ScenePlacement, SceneTone } from "./card-scenes";
+
+export type PictureSpec = RailsPicture | SymbolPicture | PairPicture | BandPicture | BenchPicture | ScenePicture;
 
 const pictures: Record<string, PictureSpec> = {};
 
@@ -265,6 +268,11 @@ const dipole: PictureSpec = {
   marks: ["468 / f", "?"],
 };
 putMany(["G9B10", "G9B11"], dipole);
+
+for (const [id, spec] of Object.entries(CARD_SCENES)) {
+  if (spec.labels.length !== spec.panes.length) throw new Error(`${id} picture panes do not match its labels`);
+  put(id, spec);
+}
 
 export function questionPicture(id: string): PictureSpec | null {
   return pictures[id] ?? null;

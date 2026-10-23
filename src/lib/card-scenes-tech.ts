@@ -1,0 +1,303 @@
+import { at, contrast, doors, one, shut, two, who, type ScenePicture } from "./scene-build";
+
+/** Bare Technician exam cards. Captions avoid each answer's private tokens. */
+export const TECH_SCENES: Record<string, ScenePicture> = {
+  T1A01: contrast(
+    "people",
+    "The service exists so operators grow more able in the craft.",
+    "Growing the craft",
+    "crowd",
+    "radio",
+  ),
+  T1A04: contrast(
+    "message",
+    "The regulator sends a message you open on a screen.",
+    "A screen message from the regulator",
+    "slip",
+    "screen",
+  ),
+  T1A05: contrast(
+    "clock",
+    "The grant is real when it shows up on the regulator's own list.",
+    "It shows up on the list",
+    "document",
+    "screen",
+  ),
+  T1A06: one("clock", "These beacons sit in one short slice of the highest HF band.", "One short slice", [
+    at("slice", 110, 60, "quiet"),
+  ]),
+  T1A07: one("device", "The station itself sits far up, clear of the Earth.", "The station sits far up", [
+    at("earth", 48, 88, "quiet"),
+    at("radio", 168, 28, "sage"),
+  ]),
+  T1A08: who("Nearby repeater keepers choose the person who suggests the channel pairs.", "Nearby keepers choose the suggester", "dial"),
+  T1A09: who("Nearby licensees who may run a relay are the ones who pick that person.", "Relay keepers make the pick", "badge"),
+  T1A10: doors("You also need the emergency agency itself to say you belong.", "The emergency agency says you belong", "badge"),
+  T1B02: contrast(
+    "people",
+    "A Technician license is enough. No space-agency permission is required.",
+    "A Technician license is enough",
+    "badge",
+    "radio",
+  ),
+  T1B07: one(
+    "clock",
+    "Only the bottom sliver of the 6-meter band and the bottom sliver of the 2-meter band.",
+    "The bottom sliver of each",
+    [at("sliver", 110, 42, "quiet"), at("sliver", 110, 82, "quiet")],
+  ),
+  T1B08: contrast(
+    "path",
+    "You may share that slice with other services, and you have to stay out of their way.",
+    "Stay out of the other service's way",
+    "wave",
+    "tower",
+  ),
+  T1B10: one("path", "Voice of this kind has a place on every one of those ranges.", "A place on every one of those ranges", [
+    at("slice", 110, 40, "sage"),
+    at("slice", 110, 78, "sage"),
+  ]),
+  T1C03: contrast("message", "Talk that fits the hobby, and talk that is simply personal.", "Hobby talk, and personal talk", "badge", "person"),
+  T1C04: contrast(
+    "exception",
+    "The regulator can take the license back or pause your operating authority.",
+    "The license can be taken back",
+    "radio",
+    "document",
+  ),
+  T1C06: one("path", "You may operate from a craft registered in this country once the person in charge agrees.", "The person in charge agrees", [
+    at("ship", 70, 64, "quiet"),
+    at("person", 150, 62, "sage"),
+  ]),
+  T1C10: one("clock", "You may transmit once the grant shows up on the regulator's list.", "Once the grant shows up", [
+    at("document", 60, 62, "sage"),
+    at("arrow", 90, 62, "sage", 130, 62),
+    at("radio", 168, 62, "sage"),
+  ]),
+  T1C11: shut("No. The grace stretch does not let you transmit.", "The grace stretch stays silent"),
+  T1D01: one("path", "Skip any country that has told the world radio union it does not want these contacts.", "That country told the world radio union no", [
+    at("earth", 110, 62, "quiet"),
+    at("cross", 148, 40, "warn"),
+  ]),
+  T1D03: doors("Secret coding is allowed only to steer something you fly, or a station off the Earth.", "Only to steer a flight or a station off the Earth", "star"),
+  T1D04: doors("Music is allowed only while you are passing along a crewed flight's own audio.", "Only while passing along a crewed flight", "star"),
+  T1D05: doors("Gear may be offered now and then, not as an ongoing shop.", "Now and then, not an ongoing shop", "radio"),
+  T1D07: one("path", "A link that carries what a distant ear hears over to the main sender.", "A distant ear linked to the main sender", [
+    at("ear", 36, 64, "sage"),
+    at("arrow", 58, 64, "sage", 120, 64),
+    at("tower", 160, 58, "quiet"),
+  ]),
+  T1D08: doors("Pay is allowed when the contact is a lesson at a school.", "A lesson at a school", "person"),
+  T1D09: doors("Only when people or their belongings are in danger right now.", "People or belongings in danger right now", "star"),
+  T1D10: contrast("message", "Sending meant for everyone, not for a chosen station.", "Meant for everyone", "radio", "crowd"),
+  T1D11: doors("You may stay unnamed only while steering something you fly.", "Only while steering something you fly", "radio"),
+  T1E02: who("Whoever may send toward the satellite.", "Whoever may send toward the satellite", "radio"),
+  T1E04: who("The license class of the person at the radio sets what you may send.", "The person at the radio", "radio"),
+  T1E05: one("people", "The place where the person running the station actually does that job.", "Where the station is actually run", [
+    at("person", 70, 64, "sage"),
+    at("radio", 140, 64, "sage"),
+  ]),
+  T1E07: one("people", "Both the person at the radio and the person who holds the license.", "Both of them", [
+    at("person", 60, 70, "sage"),
+    at("radio", 60, 28, "sage"),
+    at("person", 150, 70, "sage"),
+    at("document", 150, 28, "sage"),
+  ]),
+  T1E11: who("The person the license holder names to be responsible for what is sent.", "Named by the license holder", "badge"),
+  T1F01: one("people", "Whenever someone from the regulator asks to see the station and its records.", "Whenever the regulator asks", [
+    at("person", 56, 64, "sage"),
+    at("document", 120, 64, "sage"),
+    at("radio", 176, 64, "quiet"),
+  ]),
+  T1F02: one("clock", "Your own call still has to be said over and over through the contact, and again at the end.", "Over and over, and again at the end", [
+    at("clock", 110, 60, "sage"),
+  ]),
+  T1F03: one("clock", "Your assigned call goes out again and again through the contact, and once more at the end.", "Again and again, and at the end", [
+    at("clock", 70, 60, "sage"),
+    at("radio", 160, 60, "sage"),
+  ]),
+  T1F05: one("device", "Say the call, or send it as code. Either one counts.", "Spoken or sent as code", [
+    at("speaker", 60, 62, "sage"),
+    at("key", 155, 62, "sage"),
+  ]),
+  T1F07: one("message", "The station abroad sits in a place that agreed to let a non-licensee speak.", "A place that agreed to this", [
+    at("earth", 60, 62, "quiet"),
+    at("person", 150, 62, "sage"),
+  ]),
+  T1F08: one("message", "One operator sends it for someone else.", "Sent for someone else", [
+    at("person", 40, 64, "quiet"),
+    at("slip", 110, 62, "sage"),
+    at("person", 176, 64, "sage"),
+  ]),
+  T1F10: who("The person who first sent it is the one accountable.", "The person who first sent it", "radio"),
+  T2A04: one("path", "Their call first, then your own.", "Theirs, then yours", [
+    at("radio", 50, 64, "sage"),
+    at("arrow", 80, 64, "sage", 130, 64),
+    at("radio", 168, 64, "quiet"),
+  ]),
+  T2A05: one("path", "Their call, then your call.", "Theirs, then yours", [
+    at("speaker", 50, 62, "sage"),
+    at("arrow", 80, 62, "sage", 130, 62),
+    at("radio", 168, 62, "sage"),
+  ]),
+  T2A06: one("path", "Call CQ, say this is and your call, then stop and listen. Do that again as needed.", "CQ, your call, then listen", [
+    at("speaker", 48, 62, "sage"),
+    at("ear", 160, 62, "sage"),
+  ]),
+  T2A07: one("path", "How far the repeater's sending sits from its listening.", "The gap from sending to listening", [
+    at("tower", 110, 36, "quiet"),
+    at("arrow", 70, 78, "sage", 150, 78),
+    at("radio", 40, 84, "quiet"),
+    at("radio", 180, 84, "quiet"),
+  ]),
+  T2A09: one("path", "Your call, then say you are here for a contact.", "Your call, and you are here", [
+    at("radio", 60, 64, "sage"),
+    at("ear", 150, 62, "sage"),
+  ]),
+  T2A10: one("path", "A shared custom for where each kind of activity sits inside the range.", "A shared custom for the range", [
+    at("slice", 110, 60, "sage"),
+  ]),
+  T2B01: two(
+    "path",
+    "Reverse moves your ear off the tower and onto the path the other station uses to reach it.",
+    ["Usual: your ear stays on the tower.", "Reverse: your ear follows the station calling the tower."],
+    [
+      at("tower", 148, 30, "quiet"),
+      at("radio", 36, 90, "quiet"),
+      at("arrow", 124, 48, "quiet", 62, 70),
+      at("ear", 92, 58, "quiet"),
+    ],
+    [
+      at("tower", 168, 36, "quiet"),
+      at("radio", 40, 86, "sage"),
+      at("radio", 108, 86, "quiet"),
+      at("arrow", 52, 74, "sage", 156, 52),
+      at("ear", 96, 58, "sage"),
+    ],
+  ),
+  T2B03: one("path", "What one relay hears, every relay sends back out.", "One hears, every one sends", [
+    at("radio", 36, 70, "sage"),
+    at("tower", 100, 48, "sage"),
+    at("tower", 150, 48, "sage"),
+    at("tower", 190, 48, "sage"),
+  ]),
+  T2B07: one("device", "Put that room's number into the radio.", "That room's number goes in the radio", [
+    at("room", 60, 60, "sage"),
+    at("arrow", 100, 60, "sage", 140, 60),
+    at("radio", 172, 60, "quiet"),
+  ]),
+  T2B08: one("path", "The two stations work it out and keep sharing.", "They work it out", [
+    at("radio", 50, 64, "sage"),
+    at("handshake", 110, 62, "sage"),
+    at("radio", 170, 64, "sage"),
+  ]),
+  T2B09: one("path", "So two nearby stations can talk straight across and leave the relay free.", "Talk straight across, leave the relay free", [
+    at("radio", 46, 70, "sage"),
+    at("arrow", 70, 70, "sage", 140, 70),
+    at("radio", 168, 70, "sage"),
+    at("tower", 110, 28, "quiet"),
+    at("cross", 110, 28, "warn"),
+  ]),
+  T2B12: one("device", "A number you load so the radio can open that one relay.", "A number that opens that one relay", [
+    at("document", 50, 62, "sage"),
+    at("arrow", 86, 62, "sage", 130, 62),
+    at("tower", 168, 56, "sage"),
+  ]),
+  T2B13: one("device", "The speaker stays quiet until a station is actually there.", "Quiet until a station is there", [
+    at("speaker", 56, 62, "sage"),
+    at("wave", 150, 62, "quiet"),
+    at("cross", 150, 62, "warn"),
+  ]),
+  T2B14: one("device", "A room number that keeps stray talk away from the people who came for this one.", "A room that keeps stray talk away", [
+    at("room", 70, 60, "sage"),
+    at("wave", 160, 60, "quiet"),
+    at("cross", 160, 60, "warn"),
+  ]),
+  T2C02: who("Start the net and steer who talks.", "Start the net and steer who talks", "person"),
+  T2C03: contrast("message", "Say the word as a string of well-known letter names.", "Well-known letter names", "wave", "document"),
+  T2C04: doors("The crisis branch written into the hobby rules for a nationwide emergency.", "The crisis branch in the hobby rules", "badge"),
+  T2C05: contrast("message", "The written notes the net passes from station to station.", "Written notes the net passes", "radio", "slip"),
+  T2C06: who("Licensees who signed up their skills and gear to help the community.", "Signed up to help the community", "badge"),
+  T2C07: one("people", "Stay quiet until the person running the net gives the floor, aside from a crisis.", "Quiet until given the floor", [
+    at("person", 50, 64, "sage"),
+    at("radio", 130, 64, "quiet"),
+    at("cross", 130, 64, "warn"),
+    at("star", 180, 40, "sage"),
+  ]),
+  T2C09: doors("Only when people or their belongings are in danger right now.", "Only in a danger right now", "star"),
+  T2C11: one("message", "A count of how long the body of the note is.", "How long the body of the note is", [
+    at("slip", 70, 62, "sage"),
+    at("clock", 160, 60, "quiet"),
+  ]),
+  T4A10: one("device", "It joins a nearby radio to the wider digital web.", "A nearby radio joined to the wider web", [
+    at("radio", 46, 64, "sage"),
+    at("arrow", 76, 64, "sage", 120, 64),
+    at("cloud", 160, 62, "sage"),
+  ]),
+  T4A12: contrast("device", "A paddle helper that forms the dits and dahs from a hand on the paddles.", "A paddle helper for dits and dahs", "speaker", "key"),
+  T4B05: one("device", "It walks across the dial looking for someone on the air.", "Walking the dial", [at("dial", 110, 64, "sage")]),
+  T4B07: one("device", "The setup file that teaches the radio which relays and rooms to use.", "A setup file for relays and rooms", [
+    at("document", 50, 62, "sage"),
+    at("arrow", 86, 62, "sage", 128, 62),
+    at("radio", 168, 62, "quiet"),
+  ]),
+  T4B09: one("device", "Type that room's number into the radio.", "Type the room's number", [
+    at("room", 60, 60, "sage"),
+    at("radio", 160, 62, "sage"),
+  ]),
+  T8A12: one("device", "A second voice on the same channel is lost.", "A second voice is lost", [
+    at("wave", 56, 62, "sage"),
+    at("wave", 156, 62, "quiet"),
+    at("cross", 156, 62, "warn"),
+  ]),
+  T8B05: one("device", "The satellite itself reporting how it is doing.", "The satellite reporting how it is doing", [
+    at("earth", 60, 70, "quiet"),
+    at("star", 150, 40, "sage"),
+  ]),
+  T8B10: one("device", "A low orbit of the Earth.", "A low orbit of the Earth", [
+    at("earth", 110, 78, "quiet"),
+    at("radio", 110, 42, "sage"),
+  ]),
+  T8C04: contrast("message", "Give just the exchange, and no extra chat.", "Just the exchange", "speaker", "slip"),
+  T8C05: one("device", "A letter-and-number name for a spot on the map.", "A name for a spot on the map", [
+    at("pin", 110, 64, "sage"),
+  ]),
+  T8C06: one("device", "The same keypad tones a telephone uses.", "Telephone keypad tones", [
+    at("speaker", 46, 62, "quiet"),
+    at("cross", 46, 62, "warn"),
+    at("wave", 150, 40, "sage"),
+    at("wave", 150, 84, "sage"),
+  ]),
+  T8C07: one("device", "Speech carried across the internet.", "Speech across the internet", [
+    at("speaker", 46, 62, "sage"),
+    at("cloud", 120, 60, "sage"),
+    at("speaker", 180, 62, "sage"),
+  ]),
+  T8C08: one("path", "Joining relays together through the internet.", "Relays joined through the internet", [
+    at("tower", 40, 64, "sage"),
+    at("cloud", 110, 60, "sage"),
+    at("tower", 176, 64, "sage"),
+  ]),
+  T8C10: doors("Show the system you hold a license before you use it.", "Show that you hold a license", "document"),
+  T8D02: contrast("device", "A digital mode that still works when the trace is buried.", "It still works when the trace is buried", "wave", "faint"),
+  T8D05: one("device", "Stations showing up as pins while the notes move.", "Stations as pins", [
+    at("pin", 50, 50, "sage"),
+    at("pin", 110, 78, "sage"),
+    at("pin", 160, 46, "sage"),
+  ]),
+  T8D07: one("device", "Two talks take turns inside one narrow slot.", "Two talks take turns", [
+    at("room", 70, 48, "sage"),
+    at("room", 150, 80, "sage"),
+  ]),
+  T8D09: contrast("device", "The mode sent with a key, dits and dahs.", "Dits and dahs from a key", "wave", "key"),
+  T8D11: one("message", "The far end asks you to send the broken piece again.", "The far end asks for the piece again", [
+    at("radio", 160, 64, "quiet"),
+    at("arrow", 140, 50, "sage", 60, 50),
+    at("slip", 40, 70, "sage"),
+  ]),
+  T8D12: one("device", "Everyday wireless boxes, reflashed, carrying hobby traffic.", "Reflashed wireless boxes", [
+    at("plug", 60, 62, "sage"),
+    at("document", 160, 62, "sage"),
+  ]),
+  T9B07: contrast("device", "The everyday plug for HF and the band just above it.", "Everyday plug on the lower bands", "wave", "plug"),
+};

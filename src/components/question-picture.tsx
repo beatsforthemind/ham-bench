@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { SceneGlyph, ScenePlacement, SceneTone } from "@/lib/card-scenes";
 import { questionPicture, type BandId, type BenchId, type SceneId, type SymbolId } from "@/lib/question-pictures";
 
 const ink = { fill: "none", stroke: "currentColor", strokeWidth: 2.5 } as const;
@@ -633,11 +634,350 @@ function BenchMark({ bench, marks }: { bench: BenchId; marks: readonly string[] 
   );
 }
 
+function Arrow({ x, y, x2, y2 }: { x: number; y: number; x2: number; y2: number }) {
+  const angle = Math.atan2(y2 - y, x2 - x);
+  const head = 8;
+  const left = angle + Math.PI * 0.82;
+  const right = angle - Math.PI * 0.82;
+  return (
+    <>
+      <line x1={x} y1={y} x2={x2} y2={y2} stroke="currentColor" strokeWidth="2.5" />
+      <polyline
+        points={`${x2},${y2} ${x2 + Math.cos(left) * head},${y2 + Math.sin(left) * head} ${x2 + Math.cos(right) * head},${y2 + Math.sin(right) * head}`}
+        fill="currentColor"
+        stroke="none"
+      />
+    </>
+  );
+}
+
+function GlyphShape({ glyph, tone }: { glyph: SceneGlyph; tone: SceneTone }) {
+  switch (glyph) {
+    case "radio":
+      return (
+        <>
+          <rect x="-14" y="-20" width="28" height="36" rx="3" {...ink} />
+          <line x1="0" y1="-20" x2="0" y2="-32" {...ink} />
+          <circle cx="0" cy="-34" r="3" {...ink} />
+          <circle cx="0" cy="-4" r="5" {...ink} />
+        </>
+      );
+    case "tower":
+      return (
+        <>
+          <polyline points="-16,26 0,-28 16,26" {...ink} />
+          <line x1="-9" y1="4" x2="9" y2="4" {...ink} />
+          <line x1="-12" y1="16" x2="12" y2="16" {...ink} />
+          <line x1="-8" y1="-18" x2="8" y2="-18" {...ink} />
+        </>
+      );
+    case "person":
+      return (
+        <>
+          <circle cx="0" cy="-18" r="8" {...ink} />
+          <line x1="0" y1="-10" x2="0" y2="10" {...ink} />
+          <line x1="0" y1="-2" x2="-12" y2="8" {...ink} />
+          <line x1="0" y1="-2" x2="12" y2="8" {...ink} />
+          <line x1="0" y1="10" x2="-8" y2="26" {...ink} />
+          <line x1="0" y1="10" x2="8" y2="26" {...ink} />
+        </>
+      );
+    case "ear":
+      return <path d="M -8 8 C -14 -8 8 -16 10 0 C 12 12 -2 16 -8 8" {...ink} />;
+    case "speaker":
+      return (
+        <>
+          <rect x="-16" y="-10" width="10" height="20" {...ink} />
+          <path d="M -6 -10 L 14 -20 V 20 L -6 10 Z" {...ink} />
+        </>
+      );
+    case "wave":
+      return <polyline points={wave(-36, 0, 72, 16, 2)} {...ink} />;
+    case "faint":
+      return <polyline points={wave(-36, 0, 72, 4, 3)} {...ink} />;
+    case "cross":
+      return (
+        <>
+          <line x1="-16" y1="-16" x2="16" y2="16" stroke="currentColor" strokeWidth="3" />
+          <line x1="16" y1="-16" x2="-16" y2="16" stroke="currentColor" strokeWidth="3" />
+        </>
+      );
+    case "document":
+      return (
+        <>
+          <rect x="-16" y="-20" width="32" height="40" rx="2" {...ink} />
+          <line x1="-8" y1="-8" x2="8" y2="-8" stroke="currentColor" strokeWidth="2" />
+          <line x1="-8" y1="0" x2="8" y2="0" stroke="currentColor" strokeWidth="2" />
+          <line x1="-8" y1="8" x2="4" y2="8" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "screen":
+      return (
+        <>
+          <rect x="-24" y="-18" width="48" height="30" rx="2" {...ink} />
+          <line x1="-14" y1="-6" x2="14" y2="-6" stroke="currentColor" strokeWidth="2" />
+          <line x1="-14" y1="2" x2="6" y2="2" stroke="currentColor" strokeWidth="2" />
+          <line x1="-6" y1="12" x2="6" y2="12" {...ink} />
+          <line x1="0" y1="12" x2="0" y2="22" {...ink} />
+        </>
+      );
+    case "cloud":
+      return <path d="M -18 6 a 10 10 0 0 1 8 -16 a 12 12 0 0 1 22 4 a 8 8 0 0 1 4 12 z" {...ink} />;
+    case "key":
+      return (
+        <>
+          <line x1="-28" y1="8" x2="16" y2="8" {...ink} />
+          <line x1="-28" y1="8" x2="-18" y2="-6" {...ink} />
+          <line x1="16" y1="8" x2="28" y2="-4" {...ink} />
+          <circle cx="-6" cy="8" r="3" fill="currentColor" />
+        </>
+      );
+    case "door":
+      return (
+        <>
+          <rect x="-14" y="-24" width="28" height="46" rx="2" {...ink} />
+          {tone === "sage" ? (
+            <path d="M -6 -16 h 12 v 30 h -12" {...ink} />
+          ) : (
+            <>
+              <line x1="-7" y1="-10" x2="7" y2="10" stroke="currentColor" strokeWidth="2.5" />
+              <line x1="7" y1="-10" x2="-7" y2="10" stroke="currentColor" strokeWidth="2.5" />
+            </>
+          )}
+        </>
+      );
+    case "clock":
+      return (
+        <>
+          <circle cx="0" cy="0" r="18" {...ink} />
+          <line x1="0" y1="0" x2="0" y2="-10" stroke="currentColor" strokeWidth="2" />
+          <line x1="0" y1="0" x2="8" y2="4" stroke="currentColor" strokeWidth="2" />
+          <circle cx="0" cy="-18" r="2" fill="currentColor" />
+          <circle cx="16" cy="6" r="2" fill="currentColor" />
+          <circle cx="-14" cy="8" r="2" fill="currentColor" />
+        </>
+      );
+    case "pin":
+      return (
+        <>
+          <path d="M 0 16 C -14 4 -14 -10 0 -16 C 14 -10 14 4 0 16" {...ink} />
+          <circle cx="0" cy="-4" r="4" {...ink} />
+        </>
+      );
+    case "ship":
+      return (
+        <>
+          <path d="M -28 6 L -18 18 H 18 L 28 6 Z" {...ink} />
+          <line x1="0" y1="6" x2="0" y2="-22" {...ink} />
+          <path d="M 0 -20 L 16 -6 H 0" {...ink} />
+        </>
+      );
+    case "earth":
+      return (
+        <>
+          <circle cx="0" cy="0" r="20" {...ink} />
+          <path d="M -16 -6 Q 0 -14 16 -4" {...ink} />
+          <path d="M -18 6 Q 0 0 18 8" {...ink} />
+        </>
+      );
+    case "sun":
+      return (
+        <>
+          <circle cx="0" cy="0" r="8" {...ink} />
+          <line x1="0" y1="-14" x2="0" y2="-22" stroke="currentColor" strokeWidth="2" />
+          <line x1="0" y1="14" x2="0" y2="22" stroke="currentColor" strokeWidth="2" />
+          <line x1="-14" y1="0" x2="-22" y2="0" stroke="currentColor" strokeWidth="2" />
+          <line x1="14" y1="0" x2="22" y2="0" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "battery":
+      return (
+        <>
+          <rect x="-20" y="-12" width="36" height="24" rx="2" {...ink} />
+          <line x1="16" y1="-6" x2="16" y2="6" stroke="currentColor" strokeWidth="3" />
+        </>
+      );
+    case "plug":
+      return (
+        <>
+          <rect x="-8" y="-14" width="22" height="28" rx="3" {...ink} />
+          <line x1="-18" y1="-6" x2="-8" y2="-6" {...ink} />
+          <line x1="-18" y1="6" x2="-8" y2="6" {...ink} />
+          <line x1="14" y1="0" x2="24" y2="0" {...ink} />
+        </>
+      );
+    case "lock":
+      return (
+        <>
+          <rect x="-12" y="-4" width="24" height="20" rx="2" {...ink} />
+          <path d="M -7 -4 V -12 a 7 7 0 0 1 14 0 V -4" {...ink} />
+        </>
+      );
+    case "harness":
+      return (
+        <>
+          <circle cx="0" cy="-16" r="7" {...ink} />
+          <path d="M -10 16 V 0 H 10 V 16" {...ink} />
+          <path d="M -14 -2 H 14" {...ink} />
+          <line x1="0" y1="-8" x2="0" y2="-2" {...ink} />
+        </>
+      );
+    case "filter":
+      return (
+        <>
+          <line x1="-28" y1="0" x2="-12" y2="0" {...ink} />
+          <rect x="-12" y="-12" width="24" height="24" {...ink} />
+          <line x1="12" y1="0" x2="28" y2="0" {...ink} />
+        </>
+      );
+    case "crowd":
+      return (
+        <>
+          <circle cx="-14" cy="-6" r="5" {...ink} />
+          <circle cx="0" cy="-10" r="6" {...ink} />
+          <circle cx="14" cy="-6" r="5" {...ink} />
+          <path d="M -22 14 Q -14 2 -6 14" {...ink} />
+          <path d="M -8 16 Q 0 0 8 16" {...ink} />
+          <path d="M 6 14 Q 14 2 22 14" {...ink} />
+        </>
+      );
+    case "badge":
+      return (
+        <>
+          <circle cx="0" cy="-14" r="8" {...ink} />
+          <rect x="-10" y="0" width="20" height="16" rx="2" {...ink} />
+        </>
+      );
+    case "dial":
+      return (
+        <>
+          <path d="M -28 10 A 30 30 0 0 1 28 10" {...ink} />
+          <line x1="0" y1="10" x2="16" y2="-8" stroke="currentColor" strokeWidth="2.5" />
+        </>
+      );
+    case "room":
+      return (
+        <rect
+          x="-26"
+          y="-16"
+          width="52"
+          height="32"
+          rx="3"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          className={tone === "sage" ? "fill-sage/35" : "fill-transparent"}
+        />
+      );
+    case "slip":
+      return (
+        <>
+          <rect x="-18" y="-14" width="28" height="28" rx="2" {...ink} />
+          <line x1="-10" y1="-4" x2="4" y2="-4" stroke="currentColor" strokeWidth="2" />
+          <line x1="-10" y1="4" x2="2" y2="4" stroke="currentColor" strokeWidth="2" />
+          <line x1="8" y1="8" x2="22" y2="8" {...ink} />
+          <polyline points="16,2 22,8 16,14" fill="none" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "handshake":
+      return (
+        <>
+          <path d="M -24 4 H -6 L 2 -6" {...ink} />
+          <path d="M 24 4 H 6 L -2 -6" {...ink} />
+          <path d="M -4 2 H 4" stroke="currentColor" strokeWidth="3" />
+        </>
+      );
+    case "meter":
+      return (
+        <>
+          <rect x="-22" y="-16" width="44" height="32" rx="4" {...ink} />
+          <path d="M -12 8 A 14 14 0 0 1 12 8" {...ink} />
+          <line x1="0" y1="8" x2="6" y2="-4" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "star":
+      return <path d="M 0 -16 L 4 -4 L 16 -4 L 6 4 L 10 16 L 0 8 L -10 16 L -6 4 L -16 -4 L -4 -4 Z" {...ink} />;
+    case "rule":
+      return <line x1="0" y1="-36" x2="0" y2="36" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" />;
+    case "spill":
+      return (
+        <>
+          <rect x="-34" y="-4" width="58" height="28" {...ink} />
+          <path d="M -24 10 Q -4 -28 20 10" {...ink} className="text-sage" />
+        </>
+      );
+    case "drip":
+      return (
+        <>
+          <rect x="-34" y="-28" width="58" height="28" {...ink} />
+          <path d="M -20 -8 Q 0 24 22 -8" {...ink} className="text-sage" />
+        </>
+      );
+    case "sliver":
+      return (
+        <>
+          <rect x="-56" y="-8" width="112" height="16" {...ink} />
+          <rect x="-56" y="-8" width="16" height="16" className="fill-sage/70" stroke="none" />
+        </>
+      );
+    case "slice":
+      return (
+        <>
+          <rect x="-70" y="-8" width="140" height="16" {...ink} />
+          <rect x="36" y="-8" width="18" height="16" className="fill-sage/70" stroke="none" />
+        </>
+      );
+    case "highside":
+      return (
+        <>
+          <rect x="-70" y="-8" width="140" height="16" {...ink} />
+          <line x1="4" y1="-14" x2="4" y2="14" stroke="currentColor" strokeWidth="2" className="text-sage" />
+          <rect x="4" y="-8" width="66" height="16" className="fill-sage/70" stroke="none" />
+        </>
+      );
+    case "span":
+      return <rect x="-70" y="-8" width="140" height="16" stroke="currentColor" strokeWidth="2.5" className="fill-sage/40" />;
+    case "square":
+      return <polyline points="-34,10 -34,-10 -18,-10 -18,10 -2,10 -2,-10 14,-10 14,10 30,10" {...ink} />;
+    case "tones":
+      return (
+        <>
+          {[-36, -12, 12, 36].map((y) => (
+            <polyline key={y} points={wave(-34, y, 68, 6, 2)} {...ink} />
+          ))}
+        </>
+      );
+    default:
+      return null;
+  }
+}
+
+function ScenePane({ placements }: { placements: readonly ScenePlacement[] }) {
+  return (
+    <>
+      {placements.map((placement, index) => {
+        const tone = placement.tone === "sage" ? "text-sage" : placement.tone === "warn" ? "text-amber" : "text-ink-soft";
+        if (placement.glyph === "arrow") {
+          return (
+            <g key={index} className={tone}>
+              <Arrow x={placement.x} y={placement.y} x2={placement.x2 ?? placement.x + 24} y2={placement.y2 ?? placement.y} />
+            </g>
+          );
+        }
+        return (
+          <g key={index} className={tone} transform={`translate(${placement.x} ${placement.y})`}>
+            <GlyphShape glyph={placement.glyph} tone={placement.tone} />
+          </g>
+        );
+      })}
+    </>
+  );
+}
+
 /** The picture that makes a choice recognizable. Absent when this question has no picture yet. */
 export function QuestionPicture({ questionId }: { questionId: string }) {
   const picture = questionPicture(questionId);
   if (!picture) return null;
-  const split = picture.kind === "rails" || picture.kind === "pair";
+  const split = picture.kind === "rails" || picture.kind === "pair" || (picture.kind === "scene" && picture.panes.length > 1);
   return (
     <figure className={split ? "mt-4 grid gap-4 sm:grid-cols-2" : "mx-auto mt-4 w-full max-w-md"} data-testid="question-picture">
       {picture.kind === "rails" ? (
@@ -671,6 +1011,13 @@ export function QuestionPicture({ questionId }: { questionId: string }) {
           <BenchMark bench={picture.bench} marks={picture.marks ?? []} />
         </Panel>
       ) : null}
+      {picture.kind === "scene"
+        ? picture.panes.map((pane, index) => (
+            <Panel key={index} label={picture.labels[index] ?? ""}>
+              <ScenePane placements={pane} />
+            </Panel>
+          ))
+        : null}
     </figure>
   );
 }

@@ -8,8 +8,10 @@ import { labHref } from "@/lib/presets";
 import { isLicenseClass, poolForToday } from "@/lib/pools";
 import { statFor } from "@/lib/readiness";
 import { chartHref } from "@/lib/lanes";
+import { questionPicture } from "@/lib/question-pictures";
 import { cardFact, cardLead, ideaBeforeAnswer, stepsBeforeAnswer } from "@/lib/teach";
 import { FigureView } from "./figure";
+import { QuestionPicture } from "./question-picture";
 import { useBench } from "./bench-provider";
 import { SessionBar } from "./site-header";
 
@@ -129,22 +131,25 @@ export function PracticeRoom() {
   const citation = question.refs.replace(/[[\]]/g, "");
   const kind = question.lane === "card" ? "exam card" : "radio idea";
   const lead = question.lane === "card" ? cardLead(question) : null;
+  const picture = questionPicture(question.id);
 
   return (
     <article className="space-y-4 sm:space-y-6">
       <p className="text-sm uppercase tracking-widest text-ink-soft">
         {question.group} · {cursor + 1} of {deck.length} · {kind}
       </p>
-      {question.lane === "card" && lead ? (
+      {question.lane === "card" && (lead || picture) ? (
         <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-3 outline-none sm:p-5" data-testid="exam-fact">
           <p className="text-sm uppercase tracking-widest text-ink-soft">A way in</p>
-          <p className="mt-2 text-base sm:text-xl">{lead}</p>
+          {lead ? <p className="mt-2 text-base sm:text-xl">{lead}</p> : null}
+          <QuestionPicture questionId={question.id} />
           {citation ? <p className="mt-2 text-ink-soft">The pool cites {citation}.</p> : null}
         </div>
       ) : question.lane === "bench" ? (
         <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-3 outline-none sm:p-5" data-testid="idea-note">
           <p className="text-sm uppercase tracking-widest text-ink-soft">The idea</p>
           <p className="mt-2 text-base sm:text-xl">{ideaBeforeAnswer(question, groupTitle, question.workedSteps)}</p>
+          <QuestionPicture questionId={question.id} />
           {href ? (
             <Link href={href} className="mt-4 inline-flex min-h-11 items-center rounded-full bg-walnut px-4 text-paper">
               {href.startsWith("/bands") ? "Open the band chart" : "Try it on the bench"}
@@ -155,7 +160,7 @@ export function PracticeRoom() {
       <h1
         ref={(node) => {
           headingRef.current = node;
-          if (question.lane === "card" && !lead) teachRef.current = node;
+          if (question.lane === "card" && !lead && !picture) teachRef.current = node;
         }}
         tabIndex={-1}
         className="text-xl leading-snug outline-none sm:text-3xl"

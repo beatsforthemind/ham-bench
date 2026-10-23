@@ -8,6 +8,7 @@ import { isLicenseClass, poolForToday, questionById } from "@/lib/pools";
 import { missReview } from "@/lib/teach";
 import { emptySession, paperKey, type ExamSession } from "@/lib/session";
 import { FigureView } from "./figure";
+import { QuestionPicture } from "./question-picture";
 import { useBench } from "./bench-provider";
 import { SessionBar } from "./site-header";
 
@@ -181,6 +182,7 @@ export function ExamRoom() {
                 <p>{question.text}</p>
                 {question.figure ? <FigureView id={question.figure} hidden={false} /> : null}
                 <p className="mt-2">{review.fact}</p>
+                <QuestionPicture questionId={id} />
                 <p className="mt-2">The matching choice is “{question.answers[question.correctIndex]}.”</p>
                 {chosen == null ? <p>No answer was marked.</p> : chosen !== question.correctIndex ? <p>{question.distractors[chosen]}</p> : null}
                 {question.refs ? <p className="text-ink-soft">The pool cites {question.refs.replace(/[[\]]/g, "")}.</p> : null}

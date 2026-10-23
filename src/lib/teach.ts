@@ -4,6 +4,7 @@ import { labHref } from "./presets";
 import type { Lane } from "./lanes";
 import type { PoolQuestion } from "./pool-types";
 import { CARD_MEMORIES, NUMBER_PAIRS } from "./card-memories";
+import { questionPicture } from "./question-pictures";
 
 const STOP = new Set(
   "a an the of to for in on by with from or and is are be it as at its their than then this that these those when where who what how may can".split(" "),
@@ -81,6 +82,11 @@ function forceLead(answer: string, tokens: string[]): string | null {
 
 /** A sentence that points at the correct line, or nothing when no honest memory exists. */
 export function cardLead(question: Pick<PoolQuestion, "id" | "text" | "answers" | "correctIndex">): string | null {
+  const pictured = questionPicture(question.id);
+  if (pictured) {
+    const kept = keep(question, pictured.caption);
+    if (kept) return kept;
+  }
   const written = CARD_MEMORIES[question.id];
   if (written) {
     const kept = keep(question, written);
@@ -109,9 +115,12 @@ export function cardFact(answer: string): string {
   return `For the exam: ${fact}.`;
 }
 
-export function ideaBeforeAnswer(question: Pick<PoolQuestion, "group" | "answers" | "correctIndex">, title: string, steps: string[]): string {
+export function ideaBeforeAnswer(question: Pick<PoolQuestion, "id" | "group" | "answers" | "correctIndex">, title: string, steps: string[]): string {
+  const answer = question.answers[question.correctIndex] ?? "";
+  const pictured = questionPicture(question.id);
+  if (pictured && !leadUsesPrivateToken(question, pictured.caption) && !noteGivesAway(pictured.caption, answer, steps)) return pictured.caption;
   const note = groupNote(question.group, title);
-  if (noteGivesAway(note, question.answers[question.correctIndex] ?? "", steps)) return `This one follows from ${title}.`;
+  if (noteGivesAway(note, answer, steps)) return `This one follows from ${title}.`;
   return note;
 }
 

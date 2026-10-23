@@ -7,6 +7,7 @@ import { legalOn } from "@/lib/bands";
 import { createExam, practiceOrder, scoreExam } from "@/lib/exam";
 import { EXPECTED_FIGURES, FIGURE_ASSETS, LIVE_COUNTS, WITHDRAWN } from "@/lib/pool-facts";
 import { pools, registry } from "@/lib/pools";
+import { pictureStrings, questionPicture } from "@/lib/question-pictures";
 import { cardFact, cardLead, ideaBeforeAnswer, leadUsesPrivateToken, missReview } from "@/lib/teach";
 import { chartHref } from "@/lib/lanes";
 import { presetFromQuestion, labHref } from "@/lib/presets";
@@ -355,6 +356,7 @@ describe("learning lanes", () => {
     expect(live).not.toContain("For the exam");
     expect(live).not.toContain("question.lane");
     expect(live).not.toContain("cardLead");
+    expect(live).not.toContain("QuestionPicture");
     const card = pools.technician.questions.find((question) => question.id === "T2A01")!;
     const review = missReview(card, "technician", "Operating Procedures");
     expect(review.lane).toBe("card");
@@ -374,11 +376,70 @@ describe("learning lanes", () => {
     expect(cardLead(races)).not.toMatch(/\bRACES\b/);
     const agency = pools.technician.questions.find((question) => question.id === "T1A02")!;
     expect(cardLead(agency)).not.toMatch(/\bFCC\b/);
+    const peaks = pools.technician.questions.find((question) => question.id === "T2B05")!;
+    const peaksIdea = ideaBeforeAnswer(peaks, "VHF and UHF operating", peaks.workedSteps);
+    expect(peaksIdea.toLowerCase()).not.toContain("this group covers");
+    expect(peaksIdea.toLowerCase()).not.toContain("you are talking too loudly");
+    expect(peaksIdea.toLowerCase()).toContain("rails");
     const idea = pools.technician.questions.find((question) => question.id === "T5D11")!;
     const ideaReview = missReview(idea, "technician", "Ohm’s law");
     expect(ideaReview.lane).toBe("bench");
     expect(ideaReview.href).toContain("/labs/ohms");
     const last = idea.workedSteps.at(-1);
     if (last) expect(ideaReview.fact).not.toContain(last);
+    expect(ideaBeforeAnswer(idea, "Ohm’s law", idea.workedSteps)).not.toMatch(/\b10\b/);
+    expect(questionPicture("T5D11")?.kind).toBe("bench");
+    const resistor = pools.technician.questions.find((question) => question.id === "T6A01")!;
+    const resistorIdea = ideaBeforeAnswer(resistor, "Electrical components", resistor.workedSteps);
+    expect(resistorIdea.toLowerCase()).not.toContain("resistor");
+    expect(resistorIdea.toLowerCase()).not.toContain("this one follows");
+    expect(questionPicture("T6A01")?.kind).toBe("symbol");
+    expect(questionPicture("T1B11")?.kind).toBe("band");
+  });
+
+  it("caps questions that still have no picture", () => {
+    let uncovered = 0;
+    for (const pool of Object.values(pools)) {
+      for (const question of pool.questions) {
+        const strings = pictureStrings(question.id);
+        if (strings.length === 0) {
+          uncovered += 1;
+          continue;
+        }
+        const title = pool.groups.find((group) => group.id === question.group)?.title ?? question.group;
+        const picture = questionPicture(question.id);
+        for (const text of strings) {
+          expect(leadUsesPrivateToken(question, text), `${question.id} ${text}`).toBe(false);
+        }
+        const last = question.workedSteps.at(-1);
+        if (last) {
+          for (const text of strings) expect(text, question.id).not.toContain(last);
+        }
+        if (question.lane === "bench") {
+          expect(ideaBeforeAnswer(question, title, question.workedSteps), question.id).toBe(picture?.caption);
+        } else {
+          expect(cardLead(question), question.id).toBe(picture?.caption);
+        }
+      }
+    }
+    expect(uncovered).toBeLessThanOrEqual(1347);
+    const bench = (id: string) => {
+      const picture = questionPicture(id);
+      expect(picture?.kind, id).toBe("bench");
+      if (picture?.kind !== "bench") throw new Error(id);
+      return picture;
+    };
+    expect(bench("T5B09").bench).toBe("db-small");
+    expect(bench("G5B01").bench).toBe("db-small");
+    expect(bench("T5B09").caption).toMatch(/small step/);
+    expect(bench("T5B09").caption.toLowerCase()).not.toMatch(/empty rung/);
+    expect(bench("T5B10").bench).toBe("db-two");
+    expect(bench("T5B10").caption).toMatch(/two small steps/);
+    expect(bench("T5B11").bench).toBe("db-large");
+    expect(bench("T5B11").caption).toMatch(/large step/);
+    expect(bench("T5C11").marks).toContain("I = P / E");
+    expect(bench("T5B01").caption.toLowerCase()).not.toMatch(/empty mark/);
+    expect(bench("T5D11").marks).toContain("?");
+    expect(bench("T5D11").marks?.join(" ")).not.toMatch(/\d/);
   });
 });

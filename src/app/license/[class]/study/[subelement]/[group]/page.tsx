@@ -49,14 +49,21 @@ export default async function GroupPage({
         {group.id} · {group.title}
       </h1>
       {ideas.length > 0 ? <p className="text-xl">{noteLeaks ? `This group is about ${group.title}.` : note}</p> : <p className="text-xl">These are facts the exam expects you to recognize.</p>}
-      {bench ? (
-        <Link href={bench} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 py-2 text-paper no-underline">
-          Open the bench
+      <div className="flex flex-wrap gap-3">
+        {bench ? (
+          <Link href={bench} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 py-2 text-paper no-underline">
+            Open the bench
+          </Link>
+        ) : null}
+        <Link href={`/license/${licenseClass}/practice?group=${group.id}`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 py-2 no-underline">
+          Practice this group
         </Link>
-      ) : null}
-      <Link href={`/license/${licenseClass}/practice?group=${group.id}`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 py-2 no-underline">
-        Practice this group
-      </Link>
+        {group.id === "T1B" || group.id === "G1A" || group.id === "E1A" ? (
+          <Link href={`/bands?class=${licenseClass}`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 py-2 no-underline">
+            Open the band chart
+          </Link>
+        ) : null}
+      </div>
       {ideas.length > 0 && cards.length > 0 ? <h2 className="text-2xl">Radio ideas</h2> : null}
       <QuestionList licenseClass={licenseClass} groupId={group.id} questions={ideas.length > 0 && cards.length > 0 ? ideas : ideas.length > 0 ? ideas : []} />
       {cards.length > 0 ? <h2 className="text-2xl">{ideas.length > 0 ? "Exam cards" : "Questions"}</h2> : null}

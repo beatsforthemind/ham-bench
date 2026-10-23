@@ -304,7 +304,7 @@ function SchematicLab({ requested }: { requested: LicenseClass }) {
   return (
     <section className="space-y-5">
       <h1 className="display text-4xl sm:text-5xl">Schematic dojo</h1>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-4 gap-2">
         <Symbol name="Resistor" path="M2 10 h4 l2 -6 l4 12 l4 -12 l4 12 l2 -6 h4" />
         <Symbol name="Capacitor" path="M4 3 v14 M12 3 v14 M2 10 h2 M14 10 h4" />
         <Symbol name="Inductor" path="M2 12 q4 -10 8 0 q4 -10 8 0 q4 -10 8 0" />
@@ -317,9 +317,9 @@ function SchematicLab({ requested }: { requested: LicenseClass }) {
           </button>
         ))}
       </div>
-      <div className="overflow-x-auto">
+      <div className="max-h-[17vh] overflow-auto overscroll-contain rounded-2xl border border-line [touch-action:pan-x_pan-y]">
         <div className="relative min-w-[880px]">
-        <FigureView id={figure} hidden={false} />
+        <FigureView id={figure} hidden={false} enlarge={false} />
         {(HOTSPOTS[figure] ?? []).map((spot) => (
           <button
             key={spot.n}
@@ -633,9 +633,9 @@ function TimeLab({ showFormula, poke }: { showFormula: boolean; poke: () => void
       <h1 className="display text-4xl sm:text-5xl">Time constant</h1>
       <Field label="R, ohms" value={ohms} onChange={(value) => { setOhms(value); poke(); }} />
       <Field label="C, µF" value={microfarad} onChange={(value) => { setMicrofarad(value); poke(); }} />
-      <svg viewBox="0 0 200 80" className="w-full rounded-2xl bg-card">
+      <svg viewBox="0 0 200 80" className="w-full rounded-2xl bg-card text-ink">
         <polyline fill="none" stroke="#c47a2c" strokeWidth="2" points={points.map((point, index) => `${index * 10},${80 - point.v * 70}`).join(" ")} />
-        <line x1="40" y1="0" x2="40" y2="80" stroke="#3a2a22" strokeDasharray="2 2" />
+        <line x1="40" y1="0" x2="40" y2="80" stroke="currentColor" strokeDasharray="2 2" />
       </svg>
       <output className="num block text-3xl">τ = {round(tau)} s · about 63% charged</output>
       {showFormula ? <p>τ = RC. One time constant reaches about 63 percent of the applied voltage.</p> : null}
@@ -729,12 +729,12 @@ function YagiPicture() {
   return (
     <div className="rounded-3xl border border-line bg-card p-4">
       <h2 className="display text-3xl">A three-element Yagi</h2>
-      <svg viewBox="0 0 360 160" className="mt-3 w-full" role="img" aria-label="A reflector longer than the driven element, and a director shorter, with the lobe pointing at the director">
-        <line x1="70" y1="20" x2="70" y2="140" stroke="#2a211c" strokeWidth="6" />
+      <svg viewBox="0 0 360 160" className="mt-3 w-full text-ink" role="img" aria-label="A reflector longer than the driven element, and a director shorter, with the lobe pointing at the director">
+        <line x1="70" y1="20" x2="70" y2="140" stroke="currentColor" strokeWidth="6" />
         <line x1="170" y1="36" x2="170" y2="124" stroke="#c47a2c" strokeWidth="6" />
-        <line x1="270" y1="52" x2="270" y2="108" stroke="#3f6b4e" strokeWidth="6" />
-        <line x1="70" y1="80" x2="270" y2="80" stroke="#5c4e45" strokeWidth="2" />
-        <polygon points="310,80 286,70 286,90" fill="#1e3a5f" />
+        <line x1="270" y1="52" x2="270" y2="108" stroke="var(--color-sage)" strokeWidth="6" />
+        <line x1="70" y1="80" x2="270" y2="80" stroke="currentColor" strokeWidth="2" />
+        <polygon points="310,80 286,70 286,90" fill="var(--color-extra)" />
       </svg>
       <p className="mt-2">The reflector is the long element. The director is the short one. The lobe points toward the director.</p>
     </div>
@@ -853,8 +853,8 @@ function PrefixSelect({ label, value, onChange }: { label: string; value: number
 function Symbol({ name, path }: { name: string; path: string }) {
   return (
     <figure className="rounded-2xl border border-line bg-card p-3 text-center">
-      <svg viewBox="0 0 24 20" className="mx-auto h-12 w-full">
-        <path d={path} fill="none" stroke="#2a211c" strokeWidth="1.4" />
+      <svg viewBox="0 0 24 20" className="mx-auto h-12 w-full text-ink">
+        <path d={path} fill="none" stroke="currentColor" strokeWidth="1.4" />
       </svg>
       <figcaption>{name}</figcaption>
     </figure>
@@ -867,7 +867,7 @@ function Needle({ fraction }: { fraction: number }) {
     <svg viewBox="0 0 200 120" className="mx-auto w-48 text-walnut">
       <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="currentColor" strokeWidth="4" />
       <line x1="100" y1="100" x2="100" y2="38" stroke="#c47a2c" strokeWidth="3" style={{ transformOrigin: "100px 100px", transform: `rotate(${angle}deg)` }} />
-      <circle cx="100" cy="100" r="5" fill="#2a211c" />
+      <circle cx="100" cy="100" r="5" fill="currentColor" />
     </svg>
   );
 }

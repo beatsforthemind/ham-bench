@@ -9,6 +9,7 @@ import { missReview } from "@/lib/teach";
 import { emptySession, paperKey, type ExamSession } from "@/lib/session";
 import { FigureView } from "./figure";
 import { useBench } from "./bench-provider";
+import { SessionBar } from "./site-header";
 
 const LETTERS = ["A", "B", "C", "D"];
 
@@ -19,7 +20,9 @@ export function ExamRoom() {
   const [confirming, setConfirming] = useState(false);
   const [confirmReplace, setConfirmReplace] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const [focusTick, setFocusTick] = useState(0);
+  const confirmRef = useRef<HTMLDivElement>(null);
   const choicesRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const pool = license ? poolForToday(license) : null;
@@ -37,6 +40,20 @@ export function ExamRoom() {
     node.focus();
     node.scrollIntoView({ block: "start" });
   }, [focusTick]);
+
+  useEffect(() => {
+    if (!confirming) return;
+    confirmRef.current?.scrollIntoView({ block: "nearest" });
+  }, [confirming]);
+
+  useEffect(() => {
+    if (!mapOpen) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setMapOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mapOpen]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -72,6 +89,7 @@ export function ExamRoom() {
     beginSession(emptySession(paper, diagramFree));
     setConfirming(false);
     setConfirmReplace(false);
+    setMapOpen(false);
     setFocusTick((tick) => tick + 1);
   }
 
@@ -89,6 +107,7 @@ export function ExamRoom() {
   function go(index: number) {
     if (!active || active.result) return;
     setConfirming(false);
+    setMapOpen(false);
     patch({ ...active, index });
     setFocusTick((tick) => tick + 1);
   }
@@ -198,10 +217,10 @@ export function ExamRoom() {
       <p className="text-sm uppercase tracking-widest text-ink-soft">
         Question {active.index + 1} of {active.paper.questionIds.length} · answers stay in the published order
       </p>
-      <h1 ref={headingRef} tabIndex={-1} className="text-3xl leading-snug outline-none">
+      <h1 ref={headingRef} tabIndex={-1} className="scroll-mb-40 text-xl leading-snug outline-none sm:text-3xl">
         {question.text}
       </h1>
-      <FigureView id={question.figure} hidden={active.diagramFree && !forcedFigure} />
+      <FigureView id={question.figure} hidden={active.diagramFree && !forcedFigure} compact />
       {forcedFigure ? <p>This group has no diagram-free question, so the figure stays.</p> : null}
       <div ref={choicesRef} role="radiogroup" aria-label="Answer choices" tabIndex={0} data-choice-group className="grid gap-3 outline-none">
         {question.answers.map((answer, index) => (
@@ -219,37 +238,55 @@ export function ExamRoom() {
           </button>
         ))}
       </div>
-      <ol className="flex flex-wrap gap-1">
-        {active.paper.questionIds.map((questionId, index) => {
-          const answered = active.answers[index] != null;
-          return (
-            <li key={questionId}>
-              <button
-                type="button"
-                aria-label={`Question ${index + 1}${answered ? ", answered" : ", unanswered"}`}
-                aria-current={index === active.index ? "true" : undefined}
-                className={`min-h-11 min-w-11 rounded-lg border text-sm ${index === active.index ? "border-walnut bg-walnut text-paper" : answered ? "border-line bg-paper-deep" : "border-line bg-card"}`}
-                onClick={() => go(index)}
-              >
-                {index + 1}
+      <SessionBar>
+        <div className="grid grid-cols-3 gap-2">
+          <button type="button" className="min-h-11 rounded-full border border-line px-2 disabled:opacity-40" disabled={active.index === 0} onClick={() => go(Math.max(0, active.index - 1))}>
+            Previous
+          </button>
+          <button type="button" className="min-h-11 rounded-full border border-line px-2" aria-expanded={mapOpen} aria-haspopup="dialog" onClick={() => setMapOpen(true)}>
+            {active.index + 1} of {active.paper.questionIds.length}
+          </button>
+          <button type="button" data-testid="next-question" className="min-h-11 rounded-full border border-line px-2 disabled:opacity-40" disabled={active.index === active.paper.questionIds.length - 1} onClick={() => go(Math.min(active.paper.questionIds.length - 1, active.index + 1))}>
+            Next
+          </button>
+          <button type="button" data-testid="turn-in" className="col-span-3 min-h-11 rounded-full bg-amber px-4 text-walnut-deep" onClick={() => setConfirming(true)}>
+            Turn in paper
+          </button>
+        </div>
+      </SessionBar>
+      {mapOpen ? (
+        <div className="fixed inset-0 z-50 flex items-end bg-walnut-deep/80 sm:items-center" role="dialog" aria-modal="true" aria-label="Questions">
+          <button type="button" className="absolute inset-0" aria-label="Close questions" onClick={() => setMapOpen(false)} />
+          <div className="relative z-10 max-h-[80vh] w-full overflow-auto rounded-t-3xl bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:mx-auto sm:max-w-lg sm:rounded-3xl">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-lg">Questions</p>
+              <button type="button" className="min-h-11 rounded-full border border-line px-4" onClick={() => setMapOpen(false)}>
+                Close
               </button>
-            </li>
-          );
-        })}
-      </ol>
-      <div className="flex flex-wrap gap-3">
-        <button type="button" className="min-h-11 rounded-full border border-line px-4" onClick={() => go(Math.max(0, active.index - 1))}>
-          Previous
-        </button>
-        <button type="button" data-testid="next-question" className="min-h-11 rounded-full border border-line px-4" onClick={() => go(Math.min(active.paper.questionIds.length - 1, active.index + 1))}>
-          Next
-        </button>
-        <button type="button" data-testid="turn-in" className="min-h-11 rounded-full bg-amber px-4 text-walnut-deep" onClick={() => setConfirming(true)}>
-          Turn in paper
-        </button>
-      </div>
+            </div>
+            <ol className="flex flex-wrap gap-1">
+              {active.paper.questionIds.map((questionId, index) => {
+                const answered = active.answers[index] != null;
+                return (
+                  <li key={questionId}>
+                    <button
+                      type="button"
+                      aria-label={`Question ${index + 1}${answered ? ", answered" : ", unanswered"}`}
+                      aria-current={index === active.index ? "true" : undefined}
+                      className={`min-h-11 min-w-11 rounded-lg border text-sm ${index === active.index ? "border-walnut bg-walnut text-paper" : answered ? "border-line bg-paper-deep" : "border-line bg-card"}`}
+                      onClick={() => go(index)}
+                    >
+                      {index + 1}
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </div>
+      ) : null}
       {confirming ? (
-        <div className="rounded-2xl border border-amber bg-card p-4">
+        <div ref={confirmRef} className="scroll-mb-40 rounded-2xl border border-amber bg-card p-4">
           <p>
             {unanswered} unanswered. Those count as misses. This records one practice score.
           </p>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Syllabus } from "@/components/study-boards";
+import { StudyClassPicker } from "@/components/site-header";
 import { CLASS_INFO } from "@/lib/class-info";
 import { isLicenseClass, pools } from "@/lib/pools";
 import { LICENSE_CLASSES } from "@/lib/pool-types";
@@ -24,6 +25,7 @@ export default async function LicensePage({ params }: { params: Promise<{ class:
   return (
     <div className="space-y-8">
       <header className="space-y-3">
+        <StudyClassPicker licenseClass={licenseClass} />
         <p className={`text-sm uppercase tracking-widest ${info.tone}`}>{info.element}</p>
         <h1 className="display text-4xl sm:text-6xl">{info.name}</h1>
         <p className="max-w-3xl text-xl">{info.summary}</p>

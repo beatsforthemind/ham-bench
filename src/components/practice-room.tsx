@@ -11,6 +11,7 @@ import { chartHref } from "@/lib/lanes";
 import { cardFact, conventionHook, ideaBeforeAnswer, stepsBeforeAnswer } from "@/lib/teach";
 import { FigureView } from "./figure";
 import { useBench } from "./bench-provider";
+import { SessionBar } from "./site-header";
 
 const LETTERS = ["A", "B", "C", "D"];
 
@@ -129,21 +130,21 @@ export function PracticeRoom() {
   const kind = question.lane === "card" ? "exam card" : "radio idea";
 
   return (
-    <article className="space-y-6">
+    <article className="space-y-4 sm:space-y-6">
       <p className="text-sm uppercase tracking-widest text-ink-soft">
         {question.group} · {cursor + 1} of {deck.length} · {kind}
       </p>
       {question.lane === "card" ? (
-        <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-5 outline-none" data-testid="exam-fact">
+        <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-3 outline-none sm:p-5" data-testid="exam-fact">
           <p className="text-sm uppercase tracking-widest text-ink-soft">For the exam</p>
-          <p className="mt-2 text-xl">{cardFact(question.answers[question.correctIndex] ?? "")}</p>
+          <p className="mt-2 text-base sm:text-xl">{cardFact(question.answers[question.correctIndex] ?? "")}</p>
           {conventionHook(question.id) ? <p className="mt-2 text-ink-soft">{conventionHook(question.id)}</p> : null}
           {citation ? <p className="mt-2 text-ink-soft">The pool cites {citation}.</p> : null}
         </div>
       ) : (
-        <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-5 outline-none" data-testid="idea-note">
+        <div ref={teachRef} tabIndex={-1} className="rounded-3xl border border-line bg-card p-3 outline-none sm:p-5" data-testid="idea-note">
           <p className="text-sm uppercase tracking-widest text-ink-soft">The idea</p>
-          <p className="mt-2 text-xl">{ideaBeforeAnswer(question, groupTitle, question.workedSteps)}</p>
+          <p className="mt-2 text-base sm:text-xl">{ideaBeforeAnswer(question, groupTitle, question.workedSteps)}</p>
           {href ? (
             <Link href={href} className="mt-4 inline-flex min-h-11 items-center rounded-full bg-walnut px-4 text-paper">
               {href.startsWith("/bands") ? "Open the band chart" : "Try it on the bench"}
@@ -151,10 +152,10 @@ export function PracticeRoom() {
           ) : null}
         </div>
       )}
-      <h1 ref={headingRef} tabIndex={-1} className="text-3xl leading-snug outline-none">
+      <h1 ref={headingRef} tabIndex={-1} className="text-xl leading-snug outline-none sm:text-3xl">
         {question.text}
       </h1>
-      <FigureView id={question.figure} hidden={false} />
+      <FigureView id={question.figure} hidden={false} compact />
       <div ref={choicesRef} role="radiogroup" aria-label="Answer choices" tabIndex={0} className="grid gap-3 outline-none">
         {order.map((answerIndex, position) => {
           const picked = answered?.index === answerIndex;
@@ -190,7 +191,7 @@ export function PracticeRoom() {
         </div>
       ) : null}
       {answered ? (
-        <div ref={feedbackRef} tabIndex={-1} role="status" className="space-y-3 rounded-2xl border border-line bg-card p-5 outline-none" data-testid="feedback">
+        <div ref={feedbackRef} tabIndex={-1} role="status" className="scroll-mb-40 space-y-3 rounded-2xl border border-line bg-card p-4 outline-none sm:p-5" data-testid="feedback">
           <p className="text-xl">The matching choice is “{question.answers[question.correctIndex]}.”</p>
           {answered.index !== question.correctIndex ? <p>{question.distractors[answered.index]}</p> : null}
           {question.lane === "card" && href ? (
@@ -198,7 +199,23 @@ export function PracticeRoom() {
               Open the band chart
             </Link>
           ) : null}
-          <div>
+        </div>
+      ) : null}
+      {answered ? (
+        <SessionBar>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              className="min-h-11 rounded-full border border-line px-4 disabled:opacity-40"
+              disabled={cursor === 0}
+              onClick={() => {
+                setMark(null);
+                setPlace({ query, cursor: Math.max(0, cursor - 1) });
+                setFocusTick((tick) => tick + 1);
+              }}
+            >
+              Back
+            </button>
             <button
               type="button"
               data-testid="next-question"
@@ -212,7 +229,7 @@ export function PracticeRoom() {
               {cursor + 1 === deck.length ? "Stay on the last one" : "Next question"}
             </button>
           </div>
-        </div>
+        </SessionBar>
       ) : null}
     </article>
   );

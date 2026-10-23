@@ -24,6 +24,19 @@ function laneLabel(count: number, lane: "card" | "bench"): string {
   return count === 1 ? "1 idea" : `${count} ideas`;
 }
 
+function GroupRow({ href, id, title, detail, status }: { href: string; id: string; title: string; detail: string | null; status: string }) {
+  return (
+    <li>
+      <Link href={href} className="flex min-h-11 w-full items-center gap-3 px-4 py-3 no-underline">
+        <span className="num shrink-0 text-ink-soft">{id}</span>
+        <span className="min-w-0 flex-1 truncate text-lg md:overflow-visible md:whitespace-normal">{title}</span>
+        {detail ? <span className="shrink-0 text-sm text-ink-soft">{detail}</span> : null}
+        <span className="shrink-0 text-sm uppercase tracking-wide text-ink-soft">{status}</span>
+      </Link>
+    </li>
+  );
+}
+
 export function Syllabus({ licenseClass }: { licenseClass: LicenseClass }) {
   const { progress } = useBench();
   const pool = poolForToday(licenseClass);
@@ -60,14 +73,16 @@ export function Syllabus({ licenseClass }: { licenseClass: LicenseClass }) {
           {ideaGroups.map((group) => {
             const count = laneCount(pool, group, "bench");
             const status = groupStatus(pool, progress, group.id);
+            const mixed = count !== pool.questions.filter((question) => question.group === group.id).length;
             return (
-              <li key={group.id} className="flex flex-wrap items-center justify-between gap-3">
-                <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`} className="inline-flex min-h-11 items-center px-4 py-3 text-lg">
-                  <span className="num text-ink-soft">{group.id}</span> {group.title}
-                  {count !== pool.questions.filter((question) => question.group === group.id).length ? <span className="ml-2 text-sm text-ink-soft">{laneLabel(count, "bench")}</span> : null}
-                </Link>
-                <span className="px-4 text-sm uppercase tracking-wide text-ink-soft">{STATUS_LABEL[status]}</span>
-              </li>
+              <GroupRow
+                key={group.id}
+                href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`}
+                id={group.id}
+                title={group.title}
+                detail={mixed ? laneLabel(count, "bench") : null}
+                status={STATUS_LABEL[status]}
+              />
             );
           })}
         </ul>
@@ -81,21 +96,16 @@ export function Syllabus({ licenseClass }: { licenseClass: LicenseClass }) {
           {cardGroups.map((group) => {
             const count = laneCount(pool, group, "card");
             const status = groupStatus(pool, progress, group.id);
+            const mixed = count !== pool.questions.filter((question) => question.group === group.id).length;
             return (
-              <li key={group.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2">
-                <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`} className="inline-flex min-h-11 items-center text-lg">
-                  <span className="num text-ink-soft">{group.id}</span> {group.title}
-                  {count !== pool.questions.filter((question) => question.group === group.id).length ? <span className="ml-2 text-sm text-ink-soft">{laneLabel(count, "card")}</span> : null}
-                </Link>
-                <span className="flex items-center gap-3">
-                  {["T1B", "G1A", "E1A"].includes(group.id) ? (
-                    <Link href={`/bands?class=${licenseClass}`} className="inline-flex min-h-11 items-center text-sm uppercase tracking-wide text-ink-soft">
-                      Chart
-                    </Link>
-                  ) : null}
-                  <span className="text-sm uppercase tracking-wide text-ink-soft">{STATUS_LABEL[status]}</span>
-                </span>
-              </li>
+              <GroupRow
+                key={group.id}
+                href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`}
+                id={group.id}
+                title={group.title}
+                detail={mixed ? laneLabel(count, "card") : null}
+                status={STATUS_LABEL[status]}
+              />
             );
           })}
         </ul>
@@ -148,8 +158,9 @@ export function ProgressBoard() {
             <ul className="mt-2 space-y-1">
               {coldCards.slice(0, 6).map((group) => (
                 <li key={group.id}>
-                  <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`}>
-                    {group.id} · {group.title}
+                  <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`} className="flex min-h-11 items-center gap-2 no-underline">
+                    <span className="num shrink-0">{group.id}</span>
+                    <span className="min-w-0 truncate md:overflow-visible md:whitespace-normal">{group.title}</span>
                   </Link>
                 </li>
               ))}
@@ -159,8 +170,9 @@ export function ProgressBoard() {
             <ul className="mt-2 space-y-1">
               {coldIdeas.slice(0, 6).map((group) => (
                 <li key={group.id}>
-                  <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`}>
-                    {group.id} · {group.title}
+                  <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`} className="flex min-h-11 items-center gap-2 no-underline">
+                    <span className="num shrink-0">{group.id}</span>
+                    <span className="min-w-0 truncate md:overflow-visible md:whitespace-normal">{group.title}</span>
                   </Link>
                 </li>
               ))}
@@ -170,7 +182,7 @@ export function ProgressBoard() {
             <ul className="mt-2 flex flex-wrap gap-3">
               {labs.map(([slug]) => (
                 <li key={slug}>
-                  <Link href={`/labs/${slug}?class=${licenseClass}`} className="rounded-full border border-line px-4 py-2">
+                  <Link href={`/labs/${slug}?class=${licenseClass}`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 no-underline">
                     {slug}
                   </Link>
                 </li>

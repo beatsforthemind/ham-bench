@@ -3,30 +3,31 @@
 @theme {
   --font-sans: var(--font-source), "Source Sans 3", sans-serif;
   --font-display: var(--font-fraunces), Georgia, serif;
-  --color-paper: #f4efe6;
-  --color-paper-deep: #e7dccb;
-  --color-card: #fbf7f0;
-  --color-ink: #2a211c;
-  --color-ink-soft: #5c4e45;
-  --color-walnut: #3a2a22;
-  --color-walnut-deep: #1e1a17;
-  --color-amber: #c47a2c;
-  --color-amber-deep: #5c2e0c;
-  --color-sage: #3f6b4e;
-  --color-brass: #8c6a32;
-  --color-extra: #1e3a5f;
-  --color-line: #ddcbb8;
+  --color-paper: #1a1613;
+  --color-paper-deep: #100e0c;
+  --color-card: #26211c;
+  --color-ink: #f4efe6;
+  --color-ink-soft: #b7a48f;
+  --color-walnut: #e4c89a;
+  --color-walnut-deep: #140f0c;
+  --color-amber: #e0a04a;
+  --color-amber-deep: #d4893a;
+  --color-sage: #8fce9f;
+  --color-brass: #e0c48a;
+  --color-extra: #9ec0e0;
+  --color-line: #8a7260;
 }
 
 html {
-  background: #efe4d4;
+  background: var(--color-paper);
+  color-scheme: dark;
 }
 
 body {
   min-height: 100%;
   background:
-    radial-gradient(900px 420px at 8% -10%, #fff8ee, transparent 55%),
-    linear-gradient(180deg, #f7f1e6 0%, #efe4d4 100%);
+    radial-gradient(900px 420px at 8% -10%, var(--color-card), transparent 55%),
+    linear-gradient(180deg, var(--color-card) 0%, var(--color-paper) 100%);
   color: var(--color-ink);
   font-family: var(--font-source), "Source Sans 3", sans-serif;
   font-size: 1.0625rem;
@@ -60,11 +61,11 @@ label {
 
 input[type="range"] {
   min-height: 44px;
-  accent-color: #5c2e0c;
+  accent-color: var(--color-amber);
 }
 
 :focus-visible {
-  outline: 3px solid #2a211c;
+  outline: 3px solid var(--color-ink);
   outline-offset: 2px;
 }
 
@@ -75,8 +76,8 @@ input[type="range"] {
   z-index: 50;
   transform: translateY(-200%);
   border-radius: 999px;
-  background: #fbf7f0;
-  color: #2a211c;
+  background: var(--color-card);
+  color: var(--color-ink);
   padding: 0.75rem 1rem;
 }
 
@@ -84,8 +85,23 @@ input[type="range"] {
   transform: none;
 }
 
+.phone-shell {
+  --phone-bar: 0px;
+}
+
+@media (max-width: 47.999rem) {
+  .phone-shell {
+    --phone-bar: 4.75rem;
+  }
+
+  .phone-shell[data-session="on"] {
+    --phone-bar: 10rem;
+  }
+}
+
 ::selection {
-  background: #e7c27a;
+  background: var(--color-walnut);
+  color: var(--color-paper);
 }
 
 @media (prefers-reduced-motion: reduce) {

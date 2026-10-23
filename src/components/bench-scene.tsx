@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { groupStatus } from "@/lib/readiness";
 import { pools } from "@/lib/pools";
+import type { LicenseClass } from "@/lib/pool-types";
 import { useBench } from "./bench-provider";
+import { StudyClassPicker } from "./site-header";
 
 export function BenchHome() {
-  const { progress, session, ready } = useBench();
+  const { progress, session, ready, settings } = useBench();
   const tech = pools.technician;
   const level = (subelement: string) => {
     const groups = tech.groups.filter((group) => group.subelement === subelement);
@@ -23,11 +26,12 @@ export function BenchHome() {
   };
   const generalLit = pools.general.groups.some((group) => groupStatus(pools.general, progress, group.id) !== "unseen");
   const extraLit = pools.extra.groups.some((group) => groupStatus(pools.extra, progress, group.id) !== "unseen");
+  const studyClass = settings.studyClass;
   const resume =
     ready && session && !session.result ? (
       <Link
         href={`/license/${session.paper.licenseClass}/exam`}
-        className="inline-flex rounded-full bg-amber px-4 py-2 text-walnut-deep"
+        className="inline-flex min-h-11 items-center rounded-full bg-amber px-4 py-2 text-walnut-deep"
       >
         Resume the {session.paper.licenseClass} paper
       </Link>
@@ -35,24 +39,62 @@ export function BenchHome() {
 
   return (
     <section className="grid items-center gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-      <Station
-        license={level("T1")}
-        meters={level("T5")}
-        parts={level("T6")}
-        sky={level("T3")}
-        antenna={level("T9")}
-        ground={level("T0")}
-        scope={generalLit ? 0.9 : 0.18}
-        smith={extraLit ? 0.9 : 0.15}
-      />
-      <div className="space-y-4">
+      <div className="order-2 lg:order-1">
+        <Station
+          license={level("T1")}
+          meters={level("T5")}
+          parts={level("T6")}
+          sky={level("T3")}
+          antenna={level("T9")}
+          ground={level("T0")}
+          scope={generalLit ? 0.9 : 0.18}
+          smith={extraLit ? 0.9 : 0.15}
+        />
+      </div>
+      <div className="order-1 space-y-4 lg:order-2">
+        <StudyClassPicker />
+        <div className="flex flex-wrap gap-3">
+          <Link href={`/license/${studyClass}/practice?filter=unseen`} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 text-paper">
+            Practice unseen
+          </Link>
+          <Link href={`/license/${studyClass}/practice?filter=missed`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
+            Missed
+          </Link>
+          <Link href={`/license/${studyClass}/exam`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
+            Mock exam
+          </Link>
+        </div>
+        {resume}
+        <nav className="flex flex-wrap gap-2 md:hidden" aria-label="More bench">
+          <Link href="/bands" className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
+            Bands
+          </Link>
+          <Link href="/labs" className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
+            Labs
+          </Link>
+          <Link href="/about/sources" className="inline-flex min-h-11 items-center rounded-full border border-line px-4">
+            Sources
+          </Link>
+        </nav>
         <p className="text-lg text-ink-soft">
           The station fills in as the groups get learned. Rules hang the license, the meters wake up, the schematic gets parts, the antenna goes up, and the ground rod goes in.
         </p>
-        {resume}
         <p className="text-sm text-ink-soft">General and Extra light the scope and the Smith chart once those pools have been touched.</p>
       </div>
     </section>
+  );
+}
+
+export function LicenseCard({ licenseClass, children }: { licenseClass: LicenseClass; children: ReactNode }) {
+  const { setSettings } = useBench();
+  return (
+    <Link
+      href={`/license/${licenseClass}`}
+      onClick={() => setSettings({ studyClass: licenseClass })}
+      className="rounded-3xl border border-line bg-card p-5 no-underline"
+    >
+      {children}
+    </Link>
   );
 }
 

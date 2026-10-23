@@ -21,7 +21,17 @@ const FIGURE_SIZE: Record<string, { width: number; height: number }> = {
   "E9-3": { width: 199, height: 218 },
 };
 
-export function FigureView({ id, hidden }: { id: string | null; hidden: boolean }) {
+export function FigureView({
+  id,
+  hidden,
+  compact = false,
+  enlarge = true,
+}: {
+  id: string | null;
+  hidden: boolean;
+  compact?: boolean;
+  enlarge?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   if (!id) return null;
   const src = FIGURE_ASSETS[id];
@@ -35,17 +45,41 @@ export function FigureView({ id, hidden }: { id: string | null; hidden: boolean 
   }
   const size = FIGURE_SIZE[id] ?? { width: 1200, height: 800 };
   const alt = `Official NCVEC figure ${id}. It is a numbered drawing.`;
+  if (!enlarge) {
+    return <Image src={src} alt={alt} width={size.width} height={size.height} unoptimized className="block h-auto w-full rounded-2xl bg-white" />;
+  }
   return (
     <div>
-      <button type="button" className="block w-full" onClick={() => setOpen(true)} aria-label={`Enlarge figure ${id}`}>
-        <Image src={src} alt={alt} width={size.width} height={size.height} unoptimized className="block h-auto w-full rounded-2xl bg-white" />
+      <button type="button" className="block w-full text-left" onClick={() => setOpen(true)} aria-label={`Enlarge figure ${id}`}>
+        <Image
+          src={src}
+          alt={alt}
+          width={size.width}
+          height={size.height}
+          unoptimized
+          className={compact ? "mx-auto block h-auto w-auto max-h-[40vh] max-w-full rounded-2xl bg-white object-contain" : "block h-auto w-full rounded-2xl bg-white"}
+          style={compact ? { width: "auto", height: "auto" } : undefined}
+        />
+        {compact ? <span className="mt-2 block text-sm text-ink-soft">Enlarge</span> : null}
       </button>
       {open ? (
-        <div className="fixed inset-0 z-50 overflow-auto bg-walnut-deep/80 p-4" role="dialog" aria-modal="true" aria-label={`Figure ${id}`}>
-          <button type="button" className="mb-3 min-h-11 rounded-full bg-paper px-4 text-ink" onClick={() => setOpen(false)}>
-            Close
-          </button>
-          <Image src={src} alt={alt} width={size.width} height={size.height} unoptimized className="mx-auto h-auto max-w-none rounded-2xl bg-white" />
+        <div className="fixed inset-0 z-50 flex flex-col bg-walnut-deep/80" role="dialog" aria-modal="true" aria-label={`Figure ${id}`}>
+          <div className="flex shrink-0 justify-end p-4 pt-[max(1rem,env(safe-area-inset-top))]">
+            <button type="button" className="min-h-11 rounded-full bg-paper px-4 text-ink" onClick={() => setOpen(false)}>
+              Close
+            </button>
+          </div>
+          <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <Image
+              src={src}
+              alt={alt}
+              width={size.width}
+              height={size.height}
+              unoptimized
+              className="mx-auto h-auto w-auto max-h-[85vh] max-w-full rounded-2xl bg-white object-contain"
+              style={{ width: "auto", height: "auto" }}
+            />
+          </div>
         </div>
       ) : null}
     </div>

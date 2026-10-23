@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Sources" };
 export default function SourcesPage() {
   return (
     <div className="space-y-6">
-      <h1 className="display text-6xl">Sources</h1>
+      <h1 className="display text-4xl sm:text-6xl">Sources</h1>
       <p className="max-w-3xl text-xl">
         Question wording, answer choices, rule citations, and exam figures come from the NCVEC public-domain releases. The hints, labs, and “why this is wrong” lines are original to this bench.
       </p>
@@ -17,8 +17,10 @@ export default function SourcesPage() {
         <a href="https://www.ecfr.gov/current/title-47/chapter-I/subchapter-D/part-97">eCFR</a>. The band map uses the saved extract dated 2026-02-13.
       </p>
       <p>
-        The Apache-2.0 mirror at commit <span className="num">{MIRROR_COMMIT}</span> was a cross-check only. Its license notice stays in{" "}
-        <span className="num">source-materials/reference/russolsen_ham_radio_question_pool/LICENSE.txt</span>. Shipped question text is from the NCVEC files, not from that JSON.
+        The Apache-2.0 mirror at commit <span className="num break-all">{MIRROR_COMMIT}</span> was a cross-check only. Its license notice is copied beside each mirror JSON:{" "}
+        <span className="num break-all">source-materials/technician/russolsen/technician-2026-2030/LICENSE.txt</span>,{" "}
+        <span className="num break-all">source-materials/general/LICENSE.txt</span>, and{" "}
+        <span className="num break-all">source-materials/extra/LICENSE.txt</span>. Shipped question text is from the NCVEC files, not from that JSON.
       </p>
       <ul className="space-y-4">
         {registry.pools.map((entry) => {

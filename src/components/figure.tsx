@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
 import { FIGURE_ASSETS } from "@/lib/pool-facts";
 
 const FIGURE_SIZE: Record<string, { width: number; height: number }> = {
@@ -19,6 +22,7 @@ const FIGURE_SIZE: Record<string, { width: number; height: number }> = {
 };
 
 export function FigureView({ id, hidden }: { id: string | null; hidden: boolean }) {
+  const [open, setOpen] = useState(false);
   if (!id) return null;
   const src = FIGURE_ASSETS[id];
   if (!src) return <p>Figure {id} is not in this copy of the bench.</p>;
@@ -30,14 +34,20 @@ export function FigureView({ id, hidden }: { id: string | null; hidden: boolean 
     );
   }
   const size = FIGURE_SIZE[id] ?? { width: 1200, height: 800 };
+  const alt = `Official NCVEC figure ${id}. It is a numbered drawing.`;
   return (
-    <Image
-      src={src}
-      alt={`Official NCVEC figure ${id}`}
-      width={size.width}
-      height={size.height}
-      unoptimized
-      className="block h-auto w-full rounded-2xl bg-white"
-    />
+    <div>
+      <button type="button" className="block w-full" onClick={() => setOpen(true)} aria-label={`Enlarge figure ${id}`}>
+        <Image src={src} alt={alt} width={size.width} height={size.height} unoptimized className="block h-auto w-full rounded-2xl bg-white" />
+      </button>
+      {open ? (
+        <div className="fixed inset-0 z-50 overflow-auto bg-walnut-deep/80 p-4" role="dialog" aria-modal="true" aria-label={`Figure ${id}`}>
+          <button type="button" className="mb-3 min-h-11 rounded-full bg-paper px-4 text-ink" onClick={() => setOpen(false)}>
+            Close
+          </button>
+          <Image src={src} alt={alt} width={size.width} height={size.height} unoptimized className="mx-auto h-auto max-w-none rounded-2xl bg-white" />
+        </div>
+      ) : null}
+    </div>
   );
 }

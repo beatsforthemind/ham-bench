@@ -7,6 +7,7 @@ export type ExamSession = {
   answers: Array<number | null>;
   index: number;
   scratch: string;
+  calc: string;
   diagramFree: boolean;
   result: ExamScore | null;
 };
@@ -26,6 +27,7 @@ export function emptySession(paper: ExamPaper, diagramFree: boolean): ExamSessio
     answers: paper.questionIds.map(() => null),
     index: 0,
     scratch: "",
+    calc: "",
     diagramFree,
     result: null,
   };

@@ -38,7 +38,7 @@ export const LABS: LabMeta[] = [
   { slug: "safety", title: "Safety scenes", summary: "Charged capacitors, hot batteries, towers, power lines, and who is responsible for exposure.", min: "technician" },
   { slug: "reactance", title: "Reactance bench", summary: "Inductive reactance rises with frequency. Capacitive reactance falls.", min: "general" },
   { slug: "dividers", title: "Dividers and parallels", summary: "Three resistors in parallel, and a series divider that shares one current.", min: "general" },
-  { slug: "power", title: "PEP, RMS, and the link", summary: "Peak-to-peak into 50 ohms, and a 10 watt link budget at 40 dBm.", min: "general" },
+  { slug: "power", title: "PEP, RMS, and the link", summary: "Peak-to-peak into 50 ohms. The ERP section and the 10 watt link budget wait for Extra.", min: "general" },
   { slug: "resonance", title: "Resonance", summary: "At resonance the reactances cancel. Half-power bandwidth is frequency divided by Q.", min: "extra" },
   { slug: "time", title: "Time constant", summary: "One time constant takes a capacitor to about 63 percent.", min: "extra" },
   { slug: "phasors", title: "Phasors", summary: "Rectangular R and X become a magnitude and an angle, next to figure E5-1.", min: "extra" },

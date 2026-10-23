@@ -38,17 +38,17 @@ export default async function GroupPage({
   return (
     <div className="space-y-6">
       <p className="text-sm uppercase tracking-widest text-ink-soft">{subelement}</p>
-      <h1 className="display text-5xl">
+      <h1 className="display text-4xl sm:text-5xl">
         {group.id} · {group.title}
       </h1>
       <p className="text-xl">{groupNote(group.id, group.title)}</p>
-      <Link href={`/license/${licenseClass}/practice?group=${group.id}`} className="inline-flex rounded-full bg-walnut px-4 py-2 text-paper no-underline">
+      <Link href={`/license/${licenseClass}/practice?group=${group.id}`} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 py-2 text-paper no-underline">
         Practice this group
       </Link>
       <ol className="space-y-3">
         {questions.map((question) => (
-          <li key={question.id} className="rounded-2xl border border-line bg-card px-4 py-3">
-            <Link href={`/license/${licenseClass}/practice?group=${group.id}&q=${question.id}`}>
+          <li key={question.id} className="rounded-2xl border border-line bg-card">
+            <Link href={`/license/${licenseClass}/practice?group=${group.id}&q=${question.id}`} className="block min-h-11 px-4 py-3 text-lg">
               <span className="num text-ink-soft">{question.id}</span> {question.text}
             </Link>
           </li>

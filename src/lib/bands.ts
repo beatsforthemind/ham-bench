@@ -35,7 +35,7 @@ export const SEGMENTS: Segment[] = [
   { name: "80 m", start: 3.525, end: 3.6, min: "technician", ...cw, citation: "97.301(e), 97.307(f)(9)" },
   { name: "75 m", start: 3.6, end: 4.0, min: "extra", ...phone, citation: "97.301(b), 97.305(c)(3)" },
   { name: "75 m", start: 3.8, end: 4.0, min: "general", ...phone, citation: "97.301(d), 97.305(c)(3)" },
-  { name: "60 m", start: 5.3515, end: 5.3665, min: "general", ...wide, citation: "97.301(d), 97.305(c)(3), channelized" },
+  { name: "60 m", start: 5.3515, end: 5.3665, min: "general", ...wide, citation: "97.301(d) and 97.303(h). This contiguous segment is separate from the four channels." },
   { name: "40 m", start: 7.0, end: 7.125, min: "extra", ...data, citation: "97.301(b), 97.305(c)(3)" },
   { name: "40 m", start: 7.025, end: 7.125, min: "general", ...data, citation: "97.301(d), 97.305(c)(3)" },
   { name: "40 m", start: 7.025, end: 7.125, min: "technician", ...cw, citation: "97.301(e), 97.307(f)(9)" },
@@ -88,7 +88,29 @@ export const EXAM_CALLOUTS = [
   { band: "10", text: "CW is the narrowest common mode, SSB is a few kilohertz, and FM is wider. Upper sideband is used on 10 meters and above." },
 ];
 
+const SIXTY_METER_CHANNELS = [5.332, 5.348, 5.373, 5.405];
+
+function onSixtyMeterChannel(mhz: number): boolean {
+  return SIXTY_METER_CHANNELS.some((center) => {
+    const fromCenter = Math.abs(mhz - center) * 1000;
+    const fromCarrier = Math.abs(mhz - (center - 0.0015)) * 1000;
+    return fromCenter <= 1.5 || fromCarrier <= 0.2;
+  });
+}
+
 export function legalOn(mhz: number, license: LicenseClass, mode: Emission): { allowed: boolean; why: string } {
+  if (!(mhz > 0) || !Number.isFinite(mhz)) {
+    return { allowed: false, why: "Enter a frequency above 0 MHz." };
+  }
+  if (onSixtyMeterChannel(mhz)) {
+    if (!classAtLeast(license, "general")) {
+      return { allowed: false, why: "The 60 meter channels start at General. 47 CFR 97.303(h)." };
+    }
+    return {
+      allowed: true,
+      why: "60 meter channel. Phone and data carriers sit 1.5 kHz below the channel center. 47 CFR 97.303(h).",
+    };
+  }
   const hits = SEGMENTS.filter(
     (segment) =>
       mhz >= segment.start &&

@@ -7,9 +7,10 @@ import { legalOn } from "@/lib/bands";
 import { createExam, practiceOrder, scoreExam } from "@/lib/exam";
 import { EXPECTED_FIGURES, FIGURE_ASSETS, LIVE_COUNTS, WITHDRAWN } from "@/lib/pool-facts";
 import { pools, registry } from "@/lib/pools";
+import { presetFromQuestion } from "@/lib/presets";
 import { groupStatus, readyToTest, recordAnswer, recordExam, EMPTY_PROGRESS } from "@/lib/readiness";
 import { commitScore, emptySession } from "@/lib/session";
-import { parseStored, progressSchema } from "@/lib/storage";
+import { parseStored, progressSchema, settingsSchema } from "@/lib/storage";
 import type { PoolRegistryEntry } from "@/lib/pool-types";
 
 const root = path.resolve(__dirname, "..");
@@ -127,6 +128,7 @@ describe("exam", () => {
         });
         expect(new Set(groups)).toEqual(new Set(pool.groups.map((group) => group.id)));
         expect(createExam(pool, seed, 1).questionIds).toEqual(paper.questionIds);
+        expect(paper.figureOnlyIds).toEqual([]);
         const order = practiceOrder(["a", "b", "c", "d"], seed);
         expect(new Set(order)).toEqual(new Set([0, 1, 2, 3]));
       }),
@@ -152,11 +154,38 @@ describe("exam", () => {
     expect(second.session).toBe(first.session);
     expect(second.log.keys).toEqual(first.log.keys);
     expect(first.log.keys).toHaveLength(1);
+    const replay = emptySession(paper, false);
+    replay.answers = [...session.answers];
+    const guarded = commitScore(first.log, replay, pool);
+    expect(guarded.log.keys).toEqual(first.log.keys);
+    expect(guarded.session.result).toBeNull();
 
     const general = createExam(pools.general, "g1c", 9);
     const g1c = general.questionIds.filter((id) => id.startsWith("G1C"));
     expect(g1c).toHaveLength(1);
     expect(scoreExam(pools.extra, createExam(pools.extra, "extra", 3), Array(50).fill(0)).passingCount).toBe(37);
+  });
+
+  it("prefers a non-figure question on a diagram-free paper and still draws one per group", () => {
+    const pool = pools.technician;
+    const mixed = pool.groups.find((group) => {
+      const items = pool.questions.filter((question) => question.group === group.id);
+      return items.some((question) => question.figure) && items.some((question) => !question.figure);
+    });
+    expect(mixed).toBeTruthy();
+    fc.assert(
+      fc.property(fc.string({ minLength: 1, maxLength: 24 }), (seed) => {
+        const paper = createExam(pool, seed, 1, true);
+        expect(paper.questionIds).toHaveLength(pool.examQuestions);
+        const byId = new Map(pool.questions.map((question) => [question.id, question]));
+        const groups = new Set(paper.questionIds.map((id) => byId.get(id)!.group));
+        expect(groups.size).toBe(pool.examQuestions);
+        const picked = byId.get(paper.questionIds.find((id) => byId.get(id)!.group === mixed!.id)!)!;
+        expect(picked.figure).toBeNull();
+        expect(paper.figureOnlyIds).not.toContain(picked.id);
+      }),
+      { numRuns: 20 },
+    );
   });
 });
 
@@ -165,13 +194,16 @@ describe("readiness and storage", () => {
     const pool = pools.technician;
     const group = pool.groups[0]!;
     expect(groupStatus(pool, EMPTY_PROGRESS, group.id)).toBe("unseen");
+    const multi = pool.groups.find((item) => pool.questions.filter((question) => question.group === item.id).length > 1);
+    const only = pool.questions.find((question) => question.group === multi!.id)!;
+    expect(groupStatus(pool, recordAnswer(EMPTY_PROGRESS, pool.revision, only.id, true), multi!.id)).toBe("shaky");
     let book = EMPTY_PROGRESS;
     for (const question of pool.questions.filter((item) => item.group === group.id)) {
-      book = recordAnswer(book, question.id, true);
+      book = recordAnswer(book, pool.revision, question.id, true);
     }
     expect(groupStatus(pool, book, group.id)).toBe("solid");
-    const exams = [1, 2, 3, 4, 5].reduce((current, at) => recordExam(current, "technician", 30, 35, at), book);
-    const all = pool.questions.reduce((current, question) => recordAnswer(current, question.id, true), exams);
+    const exams = [1, 2, 3, 4, 5].reduce((current, at) => recordExam(current, "technician", 30, 35, at, pool.revision), book);
+    const all = pool.questions.reduce((current, question) => recordAnswer(current, pool.revision, question.id, true), exams);
     for (const sub of pool.subelements) {
       const groups = pool.groups.filter((item) => item.subelement === sub.id);
       for (const item of groups) {
@@ -181,11 +213,49 @@ describe("readiness and storage", () => {
     expect(readyToTest(pool, all).ready).toBe(true);
     expect(parseStored("{", progressSchema, EMPTY_PROGRESS)).toEqual(EMPTY_PROGRESS);
     expect(parseStored(JSON.stringify({ version: 2 }), progressSchema, EMPTY_PROGRESS)).toEqual(EMPTY_PROGRESS);
+    expect(parseStored(JSON.stringify({ version: 1, questions: {}, exams: {} }), progressSchema, EMPTY_PROGRESS).scoredKeys).toEqual([]);
+    const settings = parseStored(
+      JSON.stringify({ version: 1, fastLane: true, diagramFree: true, frequencyMhz: 0, studyClass: "extra" }),
+      settingsSchema,
+      { version: 1, fastLane: false, diagramFree: false, frequencyMhz: 14.25, studyClass: "technician" },
+    );
+    expect(settings.fastLane).toBe(true);
+    expect(settings.diagramFree).toBe(true);
+    expect(settings.studyClass).toBe("extra");
+    expect(settings.frequencyMhz).toBe(14.25);
+  });
+
+  it("loads the keyed numbers for the benches that were opening the wrong problem", () => {
+    const question = (id: string) => Object.values(pools).flatMap((pool) => pool.questions).find((item) => item.id === id)!;
+    const current = presetFromQuestion(question("T5C11"));
+    expect(current.watts).toBe(120);
+    expect(current.volts).toBe(12);
+    expect(current.watts! / current.volts!).toBe(10);
+    const voltage = presetFromQuestion(question("T5D11"));
+    expect(voltage.ohms).toBe(10);
+    expect(voltage.amps).toBe(1);
+    expect(presetFromQuestion(question("T5B07")).mhz).toBe(3.525);
+    const parallel = presetFromQuestion(question("G5C04"));
+    expect(parallel.r1).toBe(100);
+    expect(parallel.r2).toBe(200);
+    expect(parallel.r3).toBeUndefined();
+    expect(1 / (1 / parallel.r1! + 1 / parallel.r2!)).toBeCloseTo(66.67, 1);
+    const resonance = presetFromQuestion(question("E5A02"));
+    expect(resonance.henries).toBeCloseTo(50e-6);
+    expect(resonance.farads).toBeCloseTo(40e-12);
+    const bandwidth = presetFromQuestion(question("E5A11"));
+    expect(bandwidth.mhz).toBe(7.1);
+    expect(bandwidth.q).toBe(150);
+    const gain = presetFromQuestion(question("E7G09"));
+    expect(gain.r1).toBe(1000);
+    expect(gain.r2).toBe(10000);
+    expect(gain.volts).toBe(0.23);
   });
 
   it("answers the band questions the exam actually asks", () => {
     expect(legalOn(28.4, "technician", "phone").allowed).toBe(true);
     expect(legalOn(14.2, "technician", "phone").allowed).toBe(false);
+    expect(legalOn(5.332, "general", "phone").allowed).toBe(true);
     expect(legalOn(14.2, "general", "phone").allowed).toBe(false);
     expect(legalOn(14.3, "general", "phone").allowed).toBe(true);
     expect(legalOn(7.05, "technician", "cw").allowed).toBe(true);

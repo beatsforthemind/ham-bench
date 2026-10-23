@@ -10,7 +10,7 @@ export default function LabsPage() {
   return (
     <div className="space-y-10">
       <header className="space-y-3">
-        <h1 className="display text-6xl">The workbench</h1>
+        <h1 className="display text-4xl sm:text-6xl">The workbench</h1>
         <p className="max-w-3xl text-xl">Move the circuit, the wire, or the sky until the exam answer falls out. The band map lives on its own page.</p>
         <Link href="/bands" className="inline-flex rounded-full border border-line px-4 py-2 no-underline">
           Open the band map
@@ -18,7 +18,7 @@ export default function LabsPage() {
       </header>
       <div className="grid gap-4 md:grid-cols-2">
         {technician.map((lab) => (
-          <Link key={lab.slug} href={`/labs/${lab.slug}`} className="rounded-3xl border border-line bg-card p-5 no-underline">
+          <Link key={lab.slug} href={`/labs/${lab.slug}?class=technician`} className="rounded-3xl border border-line bg-card p-5 no-underline">
             <h2 className="display text-3xl">{lab.title}</h2>
             <p className="mt-2 text-ink-soft">{lab.summary}</p>
           </Link>

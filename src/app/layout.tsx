@@ -31,8 +31,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={`${display.variable} ${sans.variable} h-full`}>
       <body className="flex min-h-full flex-col antialiased">
         <BenchProvider>
+          <a href="#bench" className="skip-link">
+            Skip to the bench
+          </a>
           <SiteHeader />
-          <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10">{children}</main>
+          <main id="bench" className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:py-10">
+            {children}
+          </main>
           <SiteFooter />
         </BenchProvider>
       </body>

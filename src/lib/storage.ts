@@ -11,16 +11,24 @@ export const progressSchema = z.object({
   questions: z.record(z.string(), questionStatSchema),
   exams: z.record(
     z.string(),
-    z.array(z.object({ correct: z.number(), total: z.number(), at: z.number() })),
+    z.array(
+      z.object({
+        correct: z.number(),
+        total: z.number(),
+        at: z.number(),
+        revision: z.string().optional(),
+      }),
+    ),
   ),
+  scoredKeys: z.array(z.string()).default([]),
 });
 
 export const settingsSchema = z.object({
   version: z.literal(1),
-  fastLane: z.boolean(),
-  diagramFree: z.boolean(),
-  frequencyMhz: z.number().positive(),
-  studyClass: z.enum(["technician", "general", "extra"]),
+  fastLane: z.boolean().catch(false),
+  diagramFree: z.boolean().catch(false),
+  frequencyMhz: z.number().positive().catch(14.25),
+  studyClass: z.enum(["technician", "general", "extra"]).catch("technician"),
 });
 
 export const examSessionSchema = z.object({
@@ -31,10 +39,12 @@ export const examSessionSchema = z.object({
     seed: z.string(),
     questionIds: z.array(z.string()).min(1),
     createdAt: z.number(),
+    figureOnlyIds: z.array(z.string()).default([]),
   }),
   answers: z.array(z.number().int().min(0).max(3).nullable()),
   index: z.number().int().nonnegative(),
   scratch: z.string(),
+  calc: z.string().default(""),
   diagramFree: z.boolean(),
   result: z
     .object({
@@ -64,36 +74,78 @@ export function parseStored<T>(raw: string | null, schema: z.ZodType<T>, fallbac
 
 export function readStored<T>(key: string, schema: z.ZodType<T>, fallback: T): T {
   if (typeof window === "undefined") return fallback;
-  return parseStored(window.localStorage.getItem(key), schema, fallback);
+  try {
+    return parseStored(window.localStorage.getItem(key), schema, fallback);
+  } catch {
+    return fallback;
+  }
 }
 
-export function writeStored(key: string, value: unknown): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+export function writeStored(key: string, value: unknown): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export type BrowserStore<T> = {
   subscribe: (listener: () => void) => () => void;
   getSnapshot: () => T;
   getServerSnapshot: () => T;
-  write: (value: T) => void;
+  write: (value: T) => boolean;
 };
 
 export function createBrowserStore<T>(key: string, schema: z.ZodType<T>, fallback: T): BrowserStore<T> {
-  let raw = "";
+  let raw: string | null = null;
   let snapshot = fallback;
+  let preferMemory = false;
+  const memory = new Map<string, string>();
   const listeners = new Set<() => void>();
+
+  function readRaw(): string {
+    if (preferMemory && memory.has(key)) return memory.get(key)!;
+    try {
+      return window.localStorage.getItem(key) ?? "";
+    } catch {
+      preferMemory = true;
+      return memory.get(key) ?? "";
+    }
+  }
+
+  function notify() {
+    listeners.forEach((listener) => listener());
+  }
+
+  function onStorage(event: StorageEvent) {
+    if (event.key !== key) return;
+    preferMemory = false;
+    memory.delete(key);
+    raw = null;
+    notify();
+  }
+
   return {
     subscribe(listener) {
       listeners.add(listener);
-      return () => listeners.delete(listener);
+      if (listeners.size === 1 && typeof window !== "undefined") {
+        window.addEventListener("storage", onStorage);
+      }
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0 && typeof window !== "undefined") {
+          window.removeEventListener("storage", onStorage);
+        }
+      };
     },
     getServerSnapshot() {
       return fallback;
     },
     getSnapshot() {
       if (typeof window === "undefined") return fallback;
-      const next = window.localStorage.getItem(key) ?? "";
+      const next = readRaw();
       if (next !== raw) {
         raw = next;
         snapshot = next ? parseStored(next, schema, fallback) : fallback;
@@ -102,11 +154,17 @@ export function createBrowserStore<T>(key: string, schema: z.ZodType<T>, fallbac
     },
     write(value) {
       const encoded = JSON.stringify(value);
-      snapshot = value;
-      if (encoded === raw) return;
-      raw = encoded;
-      if (typeof window !== "undefined") window.localStorage.setItem(key, encoded);
-      listeners.forEach((listener) => listener());
+      try {
+        window.localStorage.setItem(key, encoded);
+        preferMemory = false;
+        memory.delete(key);
+      } catch {
+        preferMemory = true;
+        memory.set(key, encoded);
+      }
+      raw = null;
+      notify();
+      return true;
     },
   };
 }

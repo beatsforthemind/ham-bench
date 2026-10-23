@@ -66,8 +66,18 @@ function Station(props: {
   scope: number;
   smith: number;
 }) {
+  const lit = [
+    props.license > 0.35 ? "license" : null,
+    props.meters > 0.35 ? "meters" : null,
+    props.parts > 0.35 ? "schematic" : null,
+    props.sky > 0.35 ? "sky" : null,
+    props.antenna > 0.35 ? "antenna" : null,
+    props.ground > 0.35 ? "ground" : null,
+    props.scope > 0.35 ? "scope" : null,
+    props.smith > 0.35 ? "Smith chart" : null,
+  ].filter((part) => part != null);
   return (
-    <svg viewBox="0 0 800 460" role="img" aria-label="A lamp-lit radio bench" className="w-full">
+    <svg viewBox="0 0 800 460" role="img" aria-label={`A lamp-lit radio bench. Lit: ${lit.length > 0 ? lit.join(", ") : "none yet"}.`} className="w-full">
       <defs>
         <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0" stopColor="#1e2a3a" />

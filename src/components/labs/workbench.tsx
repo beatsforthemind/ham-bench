@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { classAtLeast } from "@/lib/class-info";
 import { practiceOrder } from "@/lib/exam";
 import { labBySlug } from "@/lib/labs-catalog";
-import { getPool, isLicenseClass } from "@/lib/pools";
+import { getPool, isLicenseClass, pools } from "@/lib/pools";
+import { presetFromQuestion } from "@/lib/presets";
 import type { LicenseClass, PoolQuestion } from "@/lib/pool-types";
 import { FIGURE_ASSETS } from "@/lib/pool-facts";
 import { FigureView } from "../figure";
@@ -23,14 +24,14 @@ export function Workbench({ slug }: { slug: string }) {
   if (!classAtLeast(requested, lab.min)) {
     return (
       <section className="max-w-2xl space-y-4">
-        <h1 className="display text-5xl">{lab.title}</h1>
+        <h1 className="display text-4xl sm:text-5xl">{lab.title}</h1>
         <p className="text-xl">
           This bench belongs to the {lab.min} pool. Technician study stays on the earlier benches unless you open this one on purpose.
         </p>
         <button
           type="button"
           className="rounded-full bg-walnut px-4 py-2 text-paper"
-          onClick={() => bench.setSettings({ ...bench.settings, studyClass: lab.min })}
+          onClick={() => bench.setSettings({ studyClass: lab.min })}
         >
           I’m studying for {lab.min}. Open this bench.
         </button>
@@ -67,7 +68,7 @@ function LabBody({
   if (slug === "safety") return <SafetyLab />;
   if (slug === "reactance") return <ReactanceLab showFormula={showFormula} poke={poke} />;
   if (slug === "dividers") return <DividerLab showFormula={showFormula} poke={poke} />;
-  if (slug === "power") return <PowerLab showFormula={showFormula} poke={poke} />;
+  if (slug === "power") return <PowerLab requested={requested} showFormula={showFormula} poke={poke} />;
   if (slug === "resonance") return <ResonanceLab showFormula={showFormula} poke={poke} />;
   if (slug === "time") return <TimeLab showFormula={showFormula} poke={poke} />;
   if (slug === "phasors") return <PhasorLab showFormula={showFormula} poke={poke} />;
@@ -80,12 +81,16 @@ function OhmsLab({ showFormula, poke }: { showFormula: boolean; poke: () => void
     volts: search.has("volts"),
     amps: search.has("amps"),
     ohms: search.has("ohms"),
+    watts: search.has("watts"),
   };
-  const initialSolve = !given.ohms && given.volts && given.amps ? "ohms" : !given.amps && given.volts ? "amps" : !given.volts && given.amps ? "volts" : "ohms";
+  const wattsGiven = num(search.get("watts"), NaN);
+  const voltsGiven = num(search.get("volts"), 90);
+  const fromPower = given.watts && given.volts && !given.amps && voltsGiven !== 0 && Number.isFinite(wattsGiven);
+  const initialSolve = fromPower ? "amps" : !given.ohms && given.volts && given.amps ? "ohms" : !given.amps && given.volts && given.ohms ? "amps" : !given.volts && given.amps && given.ohms ? "volts" : "ohms";
   const [solve, setSolve] = useState<"ohms" | "amps" | "volts">(initialSolve);
-  const [volts, setVolts] = useState(num(search.get("volts"), 90));
-  const [amps, setAmps] = useState(num(search.get("amps"), 3));
-  const [ohms, setOhms] = useState(num(search.get("ohms"), 30));
+  const [volts, setVolts] = useState(voltsGiven);
+  const [amps, setAmps] = useState(fromPower ? wattsGiven / voltsGiven : num(search.get("amps"), 3));
+  const [ohms, setOhms] = useState(fromPower ? (voltsGiven * voltsGiven) / wattsGiven : num(search.get("ohms"), 30));
   const [pair, setPair] = useState(false);
   const [r1, setR1] = useState(100);
   const [r2, setR2] = useState(100);
@@ -98,16 +103,16 @@ function OhmsLab({ showFormula, poke }: { showFormula: boolean; poke: () => void
 
   return (
     <section className="space-y-6">
-      <h1 className="display text-5xl">Ohm’s law bench</h1>
+      <h1 className="display text-4xl sm:text-5xl">Ohm’s law bench</h1>
       <p className="text-xl">Set any two. The needle shows the third, and the resistor warms with the watts.</p>
       <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
         <div className="space-y-4">
-          <Field label="Volts, E" value={solve === "volts" ? shownVolts : volts} readOnly={solve === "volts" || given.volts} testId="ohms-volts" onChange={(value) => { setVolts(value); poke(); }} />
-          <Field label="Amperes, I" value={solve === "amps" ? shownAmps : amps} readOnly={solve === "amps" || given.amps} testId="ohms-amps" onChange={(value) => { setAmps(value); poke(); }} />
-          <Field label="Ohms, R" value={solve === "ohms" ? shownOhms : ohms} readOnly={solve === "ohms" || given.ohms} testId="ohms-ohms" onChange={(value) => { setOhms(value); poke(); }} />
-          <label className="block text-sm">
+          <Field label="Volts, E" value={solve === "volts" ? shownVolts : volts} readOnly={solve === "volts"} testId="ohms-volts" onChange={(value) => { setVolts(value); poke(); }} />
+          <Field label="Amperes, I" value={solve === "amps" ? shownAmps : amps} readOnly={solve === "amps"} testId="ohms-amps" onChange={(value) => { setAmps(value); poke(); }} />
+          <Field label="Ohms, R" value={solve === "ohms" ? shownOhms : ohms} readOnly={solve === "ohms"} testId="ohms-ohms" onChange={(value) => { setOhms(value); poke(); }} />
+          <label className="block text-base">
             Solve for
-            <select className="ml-2 rounded-xl border border-line bg-paper px-2 py-1" value={solve} onChange={(event) => { setSolve(event.target.value as "ohms" | "amps" | "volts"); poke(); }}>
+            <select className="mt-1 min-h-11 w-full rounded-xl border border-line bg-paper px-3 text-base" value={solve} onChange={(event) => { setSolve(event.target.value as "ohms" | "amps" | "volts"); poke(); }}>
               <option value="ohms">resistance</option>
               <option value="amps">current</option>
               <option value="volts">voltage</option>
@@ -116,17 +121,17 @@ function OhmsLab({ showFormula, poke }: { showFormula: boolean; poke: () => void
         </div>
         <div>
           <Needle fraction={Math.min(shownOhms / 200, 1)} />
-          <p className="num text-center text-4xl" data-testid="ohms-readout">
+          <output className="num block text-center text-4xl" data-testid="ohms-readout">
             {round(solve === "ohms" ? shownOhms : solve === "amps" ? shownAmps : shownVolts)}
-          </p>
+          </output>
           <p className="text-center text-ink-soft">{solve === "ohms" ? "ohms" : solve === "amps" ? "amperes" : "volts"}</p>
           <div className="mx-auto mt-4 h-4 w-32 rounded-full" style={{ background: `rgba(196, 122, 44, ${Math.min(watts / 20, 1)})` }} />
           <p className="num mt-2 text-center text-xl">{round(watts)} W</p>
         </div>
       </div>
-      {showFormula ? <p>E = I × R. Power is I × E, and the same watts are I²R and E²/R.</p> : <p className="text-ink-soft">Move a value and the formula stays up. Fast lane shows it immediately.</p>}
+      {showFormula ? <p>E = I × R. Power is I × E, and the same watts are I²R and E²/R.</p> : <p className="text-ink-soft">Move a value and the formula appears. Fast lane shows it immediately.</p>}
       <div className="rounded-3xl border border-line bg-card p-4">
-        <button type="button" className="rounded-full border border-line px-4 py-2" onClick={() => { setPair((value) => !value); poke(); }}>
+        <button type="button" aria-pressed={pair} className="min-h-11 rounded-full border border-line px-4" onClick={() => { setPair((value) => !value); poke(); }}>
           {pair ? "Parallel" : "Series"}
         </button>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -154,30 +159,42 @@ const PREFIXES = [
   { name: "giga", exp: 9 },
 ];
 
+function questionByQuery(id: string | null): PoolQuestion | undefined {
+  if (!id) return undefined;
+  for (const pool of Object.values(pools)) {
+    const found = pool.questions.find((question) => question.id === id);
+    if (found) return found;
+  }
+  return undefined;
+}
+
 function PrefixLab({ showFormula, poke }: { showFormula: boolean; poke: () => void }) {
-  const [value, setValue] = useState(1.5);
-  const [from, setFrom] = useState(0);
-  const [to, setTo] = useState(-3);
+  const search = useSearchParams();
+  const asked = questionByQuery(search.get("q"));
+  const preset = asked ? presetFromQuestion(asked) : {};
+  const [value, setValue] = useState(preset.mhz ?? 1.5);
+  const [from, setFrom] = useState(preset.mhz ? 6 : 0);
+  const [to, setTo] = useState(preset.mhz ? 3 : -3);
   const converted = value * 10 ** (from - to);
   const marker = ((from - -12) / 21) * 100;
   return (
     <section className="space-y-5">
-      <h1 className="display text-5xl">Prefix tape</h1>
+      <h1 className="display text-4xl sm:text-5xl">Prefix tape</h1>
       <p>Each step of three is a thousand. The miss is almost always the direction of the decimal.</p>
       <div className="relative h-16 rounded-full bg-paper-deep">
         {PREFIXES.map((prefix) => (
-          <span key={prefix.name} className="absolute top-4 text-xs" style={{ left: `${((prefix.exp + 12) / 21) * 100}%` }}>
+          <span key={prefix.name} className="absolute top-4 -translate-x-1/2 text-xs" style={{ left: `${8 + ((prefix.exp + 12) / 21) * 84}%` }}>
             {prefix.name}
           </span>
         ))}
-        <span className="absolute top-0 h-16 w-1 bg-amber" style={{ left: `${marker}%` }} />
+        <span className="absolute top-0 h-16 w-1 bg-amber-deep" style={{ left: `${8 + (marker / 100) * 84}%` }} />
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         <Field label="Amount" value={value} onChange={(next) => { setValue(next); poke(); }} />
         <PrefixSelect label="From" value={from} onChange={(next) => { setFrom(next); poke(); }} />
         <PrefixSelect label="To" value={to} onChange={(next) => { setTo(next); poke(); }} />
       </div>
-      <p className="num text-4xl" data-testid="prefix-readout">{round(converted)} {PREFIXES.find((prefix) => prefix.exp === to)?.name}</p>
+      <output className="num block text-4xl" data-testid="prefix-readout">{round(converted)} {PREFIXES.find((prefix) => prefix.exp === to)?.name}</output>
       <div className="flex flex-wrap gap-2">
         <button type="button" className="rounded-full border border-line px-3 py-2" onClick={() => { setValue(1.5); setFrom(0); setTo(-3); poke(); }}>1.5 A to milliamperes</button>
         <button type="button" className="rounded-full border border-line px-3 py-2" onClick={() => { setValue(2425); setFrom(6); setTo(9); poke(); }}>2425 MHz to gigahertz</button>
@@ -198,7 +215,7 @@ function DecibelLab({ showFormula, poke }: { showFormula: boolean; poke: () => v
   const power = rows.at(-1)?.power ?? watts;
   return (
     <section className="space-y-5">
-      <h1 className="display text-5xl">Decibel ladder</h1>
+      <h1 className="display text-4xl sm:text-5xl">Decibel ladder</h1>
       <p>Stack the transmitter, the line loss, and the antenna gain. Three decibels doubles power. Ten multiplies by ten.</p>
       <Field label="Start, watts" value={watts} onChange={(value) => { setWatts(value); poke(); }} />
       <div className="flex flex-wrap gap-2">
@@ -251,18 +268,24 @@ const HOTSPOTS: Record<string, Array<{ n: number; x: number; y: number }>> = {
 };
 
 function SchematicLab({ requested }: { requested: LicenseClass }) {
+  const search = useSearchParams();
+  const asked = questionByQuery(search.get("q"));
   const figures = requested === "technician" ? ["T-1", "T-2", "T-3"] : ["T-1", "T-2", "T-3", "G7-1"];
-  const [figure, setFigure] = useState(figures[0]!);
-  const pool = requested === "technician" ? getPool("technician") : getPool("general");
+  const initialFigure = asked?.figure && figures.includes(asked.figure) ? asked.figure : figures[0]!;
+  const [figure, setFigure] = useState(initialFigure);
+  const pool = figure.startsWith("G") ? getPool("general") : getPool("technician");
   const questions = pool.questions.filter((question) => question.figure === figure);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => {
+    const start = questions.findIndex((item) => item.id === asked?.id);
+    return start >= 0 ? start : 0;
+  });
   const [mark, setMark] = useState<number | null>(null);
   const question = questions[index];
   const match = question?.text.match(/component (\d+)|symbol (\d+)/i);
   const mentioned = Number(match?.[1] ?? match?.[2]);
   return (
     <section className="space-y-5">
-      <h1 className="display text-5xl">Schematic dojo</h1>
+      <h1 className="display text-4xl sm:text-5xl">Schematic dojo</h1>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Symbol name="Resistor" path="M2 10 h4 l2 -6 l4 12 l4 -12 l4 12 l2 -6 h4" />
         <Symbol name="Capacitor" path="M4 3 v14 M12 3 v14 M2 10 h2 M14 10 h4" />
@@ -271,19 +294,21 @@ function SchematicLab({ requested }: { requested: LicenseClass }) {
       </div>
       <div className="flex flex-wrap gap-2">
         {figures.map((id) => (
-          <button key={id} type="button" className={`rounded-full px-4 py-2 ${id === figure ? "bg-walnut text-paper" : "border border-line"}`} onClick={() => { setFigure(id); setIndex(0); setMark(null); }}>
+          <button key={id} type="button" aria-pressed={id === figure} className={`min-h-11 rounded-full px-4 ${id === figure ? "bg-walnut text-paper" : "border border-line"}`} onClick={() => { setFigure(id); setIndex(0); setMark(null); }}>
             Figure {id}
           </button>
         ))}
       </div>
-      <div className="relative">
+      <div className="overflow-x-auto">
+        <div className="relative min-w-[880px]">
         <FigureView id={figure} hidden={false} />
         {(HOTSPOTS[figure] ?? []).map((spot) => (
           <button
             key={spot.n}
             type="button"
+            aria-label={`Component ${spot.n} on figure ${figure}`}
             data-testid={`schematic-part-${spot.n}`}
-            className={`absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 text-sm ${spot.n === mentioned ? "border-amber bg-amber text-walnut-deep" : "border-walnut bg-card/80"}`}
+            className={`absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 text-sm ${spot.n === mentioned ? "border-amber-deep bg-amber-deep text-paper" : "border-walnut bg-card/80"}`}
             style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
             onClick={() => {
               const next = questions.findIndex((item) => new RegExp(`(?:component|symbol)\\s+${spot.n}\\b`, "i").test(item.text));
@@ -296,6 +321,7 @@ function SchematicLab({ requested }: { requested: LicenseClass }) {
             {spot.n}
           </button>
         ))}
+        </div>
       </div>
       {question ? <DojoQuestion question={question} mark={mark} onMark={setMark} onNext={() => { setIndex((current) => (current + 1) % questions.length); setMark(null); }} /> : null}
       {classAtLeast(requested, "extra") ? <OpAmp /> : null}
@@ -309,12 +335,16 @@ function DojoQuestion({ question, mark, onMark, onNext }: { question: PoolQuesti
     <div className="space-y-3">
       <h2 className="text-2xl">{question.text}</h2>
       {order.map((answerIndex) => (
-        <button key={answerIndex} type="button" className="block w-full rounded-2xl border border-line bg-card px-4 py-3 text-left" onClick={() => onMark(answerIndex)}>
-          {question.answers[answerIndex]}
+        <button key={answerIndex} type="button" aria-pressed={mark === answerIndex} className="flex min-h-11 w-full items-start rounded-2xl border border-line bg-card px-4 py-3 text-left" onClick={() => onMark(answerIndex)}>
+          <span>
+            {question.answers[answerIndex]}
+            {mark != null && answerIndex === question.correctIndex ? <span className="sr-only"> Correct answer.</span> : null}
+            {mark === answerIndex ? <span className="sr-only"> Your choice.</span> : null}
+          </span>
         </button>
       ))}
       {mark != null ? (
-        <div>
+        <div role="status">
           <p>The matching choice is “{question.answers[question.correctIndex]}.”</p>
           {mark !== question.correctIndex ? <p>{question.distractors[mark]}</p> : null}
           <button type="button" className="mt-2 rounded-full border border-line px-4 py-2" onClick={onNext}>Next part</button>
@@ -329,7 +359,7 @@ function OpAmp() {
   const [r1, setR1] = useState(num(search.get("r1"), 10));
   const [rf, setRf] = useState(num(search.get("r2"), 470));
   const [vin, setVin] = useState(num(search.get("volts"), 0));
-  const gain = -rf / r1;
+  const magnitude = r1 === 0 ? 0 : rf / r1;
   return (
     <div className="rounded-3xl border border-line bg-card p-4">
       <h2 className="display text-3xl">Figure E7-3</h2>
@@ -339,8 +369,8 @@ function OpAmp() {
         <Field label="RF, ohms" value={rf} onChange={setRf} />
         <Field label="Input volts" value={vin} onChange={setVin} />
       </div>
-      <p className="num mt-3 text-3xl">Gain {round(gain)}{vin ? `, output ${round(gain * vin)} V` : ""}</p>
-      <p>The magnitude is RF / R1. The inverting drawing makes the sign negative.</p>
+      <output className="num mt-3 block text-3xl">Gain {round(magnitude)}{vin ? `, output ${round(-magnitude * vin)} V` : ""}</output>
+      <p>The big number is the gain magnitude, RF / R1. The minus sign belongs to the output voltage.</p>
     </div>
   );
 }
@@ -348,19 +378,31 @@ function OpAmp() {
 function AntennaLab({ requested, showFormula, poke }: { requested: LicenseClass; showFormula: boolean; poke: () => void }) {
   const search = useSearchParams();
   const { settings, setFrequency } = useBench();
-  const [mhz, setMhz] = useState(num(search.get("mhz"), settings.frequencyMhz));
+  const queryMhz = num(search.get("mhz"), NaN);
+  const [mhz, setMhz] = useState(queryMhz > 0 ? queryMhz : settings.frequencyMhz);
   const [dipole, setDipole] = useState(requested !== "technician");
-  const wavelength = 300 / mhz;
+  const asked = questionByQuery(search.get("q"));
+  const pattern = asked?.figure === "E9-1" || asked?.figure === "E9-2" ? asked.figure : null;
+  const wavelength = mhz > 0 ? 300 / mhz : 0;
+  useEffect(() => {
+    if (queryMhz > 0) setFrequency(queryMhz);
+  }, [queryMhz, setFrequency]);
   function update(value: number) {
     setMhz(value);
-    setFrequency(value);
+    if (value > 0) setFrequency(value);
     poke();
   }
   return (
     <section className="space-y-5">
-      <h1 className="display text-5xl">Antenna shop</h1>
+      <h1 className="display text-4xl sm:text-5xl">Antenna shop</h1>
+      {pattern ? (
+        <div className="space-y-2">
+          <FigureView id={pattern} hidden={false} />
+          <p>This pattern question uses the official figure. The wavelength shop is still here for the length questions.</p>
+        </div>
+      ) : null}
       <Field label="Frequency, MHz" value={mhz} testId="antenna-mhz" onChange={update} />
-      <p className="num text-5xl" data-testid="antenna-wavelength">{round(wavelength)} m</p>
+      <output className="num block text-4xl sm:text-5xl" data-testid="antenna-wavelength">{round(wavelength)} m</output>
       <p>That is one wavelength. Higher frequency, shorter wave. A half-wave dipole radiates strongest broadside to the wire.</p>
       {!dipole ? (
         <p>A 19-inch vertical is used on 2 meters because it is a shortened quarter wave. This bench does not ask a Technician to compute antenna length in inches. Shortening a dipole raises its resonant frequency.</p>
@@ -372,7 +414,11 @@ function AntennaLab({ requested, showFormula, poke }: { requested: LicenseClass;
       <button type="button" className="rounded-full border border-line px-4 py-2" onClick={() => setDipole((value) => !value)}>
         {dipole ? "Back to the Technician picture" : "Show the General dipole in feet"}
       </button>
-      {showFormula ? <p>Wavelength in meters ≈ 300 / f(MHz). The General length in feet is about 468 / f(MHz).</p> : null}
+      {showFormula ? (
+        dipole ? <p>Half-wave dipole in feet ≈ 468 / f. A quarter-wave vertical is about half of that.</p> : <p>Wavelength in meters ≈ 300 / f. A quarter wave is about a quarter of that length.</p>
+      ) : (
+        <p className="text-ink-soft">Move a value and the formula appears.</p>
+      )}
     </section>
   );
 }
@@ -384,7 +430,7 @@ function SwrLab({ showFormula, poke }: { showFormula: boolean; poke: () => void 
   const ratio = Math.max(line, load) / Math.min(line, load);
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">Match and SWR</h1>
+      <h1 className="display text-4xl sm:text-5xl">Match and SWR</h1>
       <div className="grid gap-3 md:grid-cols-2">
         <Field label="Feed line, ohms" value={line} onChange={(value) => { setLine(value); poke(); }} />
         <Field label="Resistive load, ohms" value={load} onChange={(value) => { setLoad(value); poke(); }} />
@@ -398,9 +444,12 @@ function SwrLab({ showFormula, poke }: { showFormula: boolean; poke: () => void 
 }
 
 function PropagationLab({ requested, poke }: { requested: LicenseClass; poke: () => void }) {
+  const search = useSearchParams();
   const { settings, setFrequency } = useBench();
+  const queryMhz = num(search.get("mhz"), NaN);
+  const startMhz = Math.min(148, Math.max(3, queryMhz > 0 ? queryMhz : settings.frequencyMhz > 0 ? settings.frequencyMhz : 14));
   const [hour, setHour] = useState(14);
-  const [mhz, setMhz] = useState(settings.frequencyMhz);
+  const [mhz, setMhz] = useState(startMhz);
   const [angle, setAngle] = useState(30);
   const day = hour > 7 && hour < 19;
   const hf = mhz < 30;
@@ -408,7 +457,7 @@ function PropagationLab({ requested, poke }: { requested: LicenseClass; poke: ()
   const muf = day ? 21 : 10;
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">Propagation theater</h1>
+      <h1 className="display text-4xl sm:text-5xl">Propagation theater</h1>
       <svg viewBox="0 0 640 280" className="w-full rounded-3xl bg-[#1e2a3a]">
         <ellipse cx="320" cy="300" rx="280" ry="80" fill="#3f6b4e" />
         <path d="M40 180 Q320 40 600 180" fill="#24344a" opacity={0.9} />
@@ -416,7 +465,7 @@ function PropagationLab({ requested, poke }: { requested: LicenseClass; poke: ()
         <path d={`M120 210 Q ${220 + angle} ${40 + (hf ? 0 : 80)} 520 210`} fill="none" stroke="#e7c27a" strokeWidth="3" />
       </svg>
       <label className="block">Hour {hour}<input type="range" min={0} max={24} value={hour} onChange={(event) => { setHour(Number(event.target.value)); poke(); }} className="w-full" /></label>
-      <label className="block">Frequency {mhz} MHz<input type="range" min={3} max={148} value={mhz} onChange={(event) => { const value = Number(event.target.value); setMhz(value); setFrequency(value); poke(); }} className="w-full" /></label>
+      <label className="block">Frequency {mhz} MHz<input type="range" min={3} max={148} value={mhz} onChange={(event) => { const value = Math.min(148, Math.max(3, Number(event.target.value))); setMhz(value); if (value > 0) setFrequency(value); poke(); }} className="w-full" /></label>
       <label className="block">Takeoff angle {angle}°<input type="range" min={5} max={80} value={angle} onChange={(event) => setAngle(Number(event.target.value))} className="w-full" /></label>
       <p>{hf ? "HF can skip off the ionosphere. The D layer absorbs it in the daytime and fades after sunset." : "VHF and UHF are mostly line of sight. The layers above are not the path."}</p>
       <p>{angle > 50 ? "A high angle is the NVIS picture: regional coverage on the lower HF bands." : "A low angle is the DX picture: the wave leaves toward the horizon."}</p>
@@ -434,16 +483,15 @@ const SCENES = [
 ];
 
 function SafetyLab() {
-  const [open, setOpen] = useState(0);
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">Safety scenes</h1>
+      <h1 className="display text-4xl sm:text-5xl">Safety scenes</h1>
       <div className="grid gap-3">
-        {SCENES.map((scene, index) => (
-          <button key={scene.title} type="button" className="rounded-2xl border border-line bg-card px-4 py-4 text-left" onClick={() => setOpen(index)}>
-            <span className="text-xl">{scene.title}</span>
-            {open === index ? <span className="mt-2 block text-ink-soft">{scene.body}</span> : null}
-          </button>
+        {SCENES.map((scene) => (
+          <details key={scene.title} className="rounded-2xl border border-line bg-card px-4 py-3">
+            <summary className="min-h-11 cursor-pointer text-xl">{scene.title}</summary>
+            <p className="mt-2 text-ink-soft">{scene.body}</p>
+          </details>
         ))}
       </div>
     </section>
@@ -460,7 +508,7 @@ function ReactanceLab({ showFormula, poke }: { showFormula: boolean; poke: () =>
   const xc = 1 / (2 * Math.PI * f * picofarad * 1e-12);
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">Reactance bench</h1>
+      <h1 className="display text-4xl sm:text-5xl">Reactance bench</h1>
       <Field label="Frequency, MHz" value={mhz} onChange={(value) => { setMhz(value); setFrequency(value); poke(); }} />
       <Field label="Inductance, µH" value={microhenry} onChange={(value) => { setMicrohenry(value); poke(); }} />
       <Field label="Capacitance, pF" value={picofarad} onChange={(value) => { setPicofarad(value); poke(); }} />
@@ -473,65 +521,78 @@ function ReactanceLab({ showFormula, poke }: { showFormula: boolean; poke: () =>
 
 function DividerLab({ showFormula, poke }: { showFormula: boolean; poke: () => void }) {
   const search = useSearchParams();
+  const twoOnly = search.has("r1") && search.has("r2") && !search.has("r3");
   const [r1, setR1] = useState(num(search.get("r1"), 100));
   const [r2, setR2] = useState(num(search.get("r2"), 200));
-  const [r3, setR3] = useState(num(search.get("r3"), 300));
+  const [r3, setR3] = useState(twoOnly ? Number.NaN : num(search.get("r3"), 300));
   const [vin, setVin] = useState(12);
-  const parallel = 1 / (1 / r1 + 1 / r2 + 1 / r3);
+  const useThird = Number.isFinite(r3);
+  const parallel = useThird ? 1 / (1 / r1 + 1 / r2 + 1 / r3) : 1 / (1 / r1 + 1 / r2);
   const vout = vin * (r2 / (r1 + r2));
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">Dividers and parallels</h1>
-      <div className="grid gap-3 md:grid-cols-3">
+      <h1 className="display text-4xl sm:text-5xl">Dividers and parallels</h1>
+      <div className={`grid gap-3 ${useThird ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
         <Field label="R1" value={r1} onChange={(value) => { setR1(value); poke(); }} />
         <Field label="R2" value={r2} onChange={(value) => { setR2(value); poke(); }} />
-        <Field label="R3" value={r3} onChange={(value) => { setR3(value); poke(); }} />
+        {useThird ? <Field label="R3" value={r3} onChange={(value) => { setR3(value); poke(); }} /> : null}
       </div>
-      <p className="num text-3xl">Three in parallel ≈ {round(parallel)} Ω, less than the smallest.</p>
+      <output className="num block text-3xl">{useThird ? "Three" : "Two"} in parallel ≈ {Math.round(parallel)} Ω, less than the smallest.</output>
       <Field label="Divider input, volts" value={vin} onChange={setVin} />
       <p>Series divider across R2: {round(vout)} V. The same current runs through both resistors. Capacitors in series combine the way resistors do in parallel.</p>
-      {showFormula ? <p>1/R = 1/R1 + 1/R2 + 1/R3. Vout = Vin × R2 / (R1 + R2).</p> : null}
+      {showFormula ? <p>{useThird ? "1/R = 1/R1 + 1/R2 + 1/R3." : "1/R = 1/R1 + 1/R2."} Vout = Vin × R2 / (R1 + R2).</p> : null}
     </section>
   );
 }
 
-function PowerLab({ showFormula, poke }: { showFormula: boolean; poke: () => void }) {
+function PowerLab({ requested, showFormula, poke }: { requested: LicenseClass; showFormula: boolean; poke: () => void }) {
   const search = useSearchParams();
+  const extra = classAtLeast(requested, "extra");
   const [vpp, setVpp] = useState(num(search.get("peakToPeak"), 100));
   const [ohms, setOhms] = useState(num(search.get("ohms"), 50));
-  const [gain, setGain] = useState(6);
-  const [loss, setLoss] = useState(2);
+  const [tx, setTx] = useState(num(search.get("watts"), 150));
+  const [gain, setGain] = useState(num(search.get("gain"), 7));
+  const [loss, setLoss] = useState(num(search.get("loss"), 4.2));
   const peak = vpp / 2;
   const rms = peak / Math.SQRT2;
-  const pep = (rms * rms) / ohms;
-  const dbm = 40 + gain - loss;
+  const pep = ohms === 0 ? 0 : (rms * rms) / ohms;
+  const erp = tx * 10 ** ((gain - loss) / 10);
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">PEP, RMS, and the link</h1>
+      <h1 className="display text-4xl sm:text-5xl">PEP, RMS, and the link</h1>
       <Field label="Peak-to-peak volts" value={vpp} onChange={(value) => { setVpp(value); poke(); }} />
       <Field label="Load, ohms" value={ohms} onChange={(value) => { setOhms(value); poke(); }} />
-      <p className="num text-3xl">RMS {round(rms)} V · PEP {round(pep)} W</p>
-      <p>10 W is +40 dBm. Add {gain} dB of gain and subtract {loss} dB of loss and the link is {round(dbm)} dBm.</p>
-      <Field label="Antenna gain, dB" value={gain} onChange={setGain} />
-      <Field label="Line loss, dB" value={loss} onChange={setLoss} />
-      {showFormula ? <p>RMS = (Vpp / 2) / √2. PEP = Vrms² / R. The errata link questions use 10 W, which is 40 dBm.</p> : null}
+      <output className="num block text-3xl">RMS {round(rms)} V · PEP {round(pep)} W</output>
+      {extra ? (
+        <div className="space-y-3 rounded-3xl border border-line bg-card p-4">
+          <h2 className="text-2xl">Effective radiated power</h2>
+          <Field label="Transmitter watts" value={tx} onChange={(value) => { setTx(value); poke(); }} />
+          <Field label="Gain, dB" value={gain} onChange={(value) => { setGain(value); poke(); }} />
+          <Field label="Losses, dB" value={loss} onChange={(value) => { setLoss(value); poke(); }} />
+          <output className="num block text-3xl">About {round(erp)} W</output>
+          <p>10 W is +40 dBm. That link-budget example stays on the Extra bench.</p>
+        </div>
+      ) : null}
+      {showFormula ? <p>RMS = (Vpp / 2) / √2. PEP = Vrms² / R. ERP is transmitter watts times 10 to the power of (gain − loss) / 10.</p> : null}
     </section>
   );
 }
 
 function ResonanceLab({ showFormula, poke }: { showFormula: boolean; poke: () => void }) {
-  const [microhenry, setMicrohenry] = useState(10);
-  const [picofarad, setPicofarad] = useState(100);
-  const [q, setQ] = useState(10);
+  const search = useSearchParams();
+  const stated = num(search.get("mhz"), NaN);
+  const [microhenry, setMicrohenry] = useState(num(search.get("henries"), 10e-6) / 1e-6);
+  const [picofarad, setPicofarad] = useState(num(search.get("farads"), 100e-12) / 1e-12);
+  const [q, setQ] = useState(num(search.get("quality"), 10));
   const f = 1 / (2 * Math.PI * Math.sqrt(microhenry * 1e-6 * picofarad * 1e-12));
-  const mhz = f / 1e6;
+  const mhz = Number.isFinite(stated) ? stated : f / 1e6;
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">Resonance</h1>
+      <h1 className="display text-4xl sm:text-5xl">Resonance</h1>
       <Field label="L, µH" value={microhenry} onChange={(value) => { setMicrohenry(value); poke(); }} />
       <Field label="C, pF" value={picofarad} onChange={(value) => { setPicofarad(value); poke(); }} />
       <Field label="Q" value={q} onChange={setQ} />
-      <p className="num text-4xl">{round(mhz)} MHz</p>
+      <output className="num block text-4xl">{round(mhz)} MHz</output>
       <p>At that frequency XL cancels XC and the series circuit looks like the resistance. Half-power bandwidth is {round((mhz / q) * 1000)} kHz. A higher Q is a sharper peak.</p>
       {showFormula ? <p>f = 1 / (2π√LC). Bandwidth = f / Q.</p> : null}
     </section>
@@ -539,8 +600,9 @@ function ResonanceLab({ showFormula, poke }: { showFormula: boolean; poke: () =>
 }
 
 function TimeLab({ showFormula, poke }: { showFormula: boolean; poke: () => void }) {
-  const [ohms, setOhms] = useState(10000);
-  const [microfarad, setMicrofarad] = useState(10);
+  const search = useSearchParams();
+  const [ohms, setOhms] = useState(num(search.get("ohms"), 10000));
+  const [microfarad, setMicrofarad] = useState(num(search.get("microfarad"), 10));
   const tau = ohms * microfarad * 1e-6;
   const points = Array.from({ length: 21 }, (_, index) => {
     const t = (index / 20) * tau * 5;
@@ -548,31 +610,32 @@ function TimeLab({ showFormula, poke }: { showFormula: boolean; poke: () => void
   });
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">Time constant</h1>
+      <h1 className="display text-4xl sm:text-5xl">Time constant</h1>
       <Field label="R, ohms" value={ohms} onChange={(value) => { setOhms(value); poke(); }} />
       <Field label="C, µF" value={microfarad} onChange={(value) => { setMicrofarad(value); poke(); }} />
       <svg viewBox="0 0 200 80" className="w-full rounded-2xl bg-card">
         <polyline fill="none" stroke="#c47a2c" strokeWidth="2" points={points.map((point, index) => `${index * 10},${80 - point.v * 70}`).join(" ")} />
         <line x1="40" y1="0" x2="40" y2="80" stroke="#3a2a22" strokeDasharray="2 2" />
       </svg>
-      <p className="num text-3xl">τ = {round(tau)} s · about 63% charged</p>
+      <output className="num block text-3xl">τ = {round(tau)} s · about 63% charged</output>
       {showFormula ? <p>τ = RC. One time constant reaches about 63 percent of the applied voltage.</p> : null}
     </section>
   );
 }
 
 function PhasorLab({ showFormula, poke }: { showFormula: boolean; poke: () => void }) {
-  const [ohms, setOhms] = useState(300);
-  const [reactance, setReactance] = useState(-40);
+  const search = useSearchParams();
+  const [ohms, setOhms] = useState(num(search.get("ohms"), 300));
+  const [reactance, setReactance] = useState(num(search.get("reactance"), -40));
   const magnitude = Math.hypot(ohms, reactance);
   const angle = (Math.atan2(reactance, ohms) * 180) / Math.PI;
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">Phasors</h1>
+      <h1 className="display text-4xl sm:text-5xl">Phasors</h1>
       <FigureView id="E5-1" hidden={false} />
       <Field label="Resistance, ohms" value={ohms} onChange={(value) => { setOhms(value); poke(); }} />
       <Field label="Reactance, ohms" value={reactance} onChange={(value) => { setReactance(value); poke(); }} />
-      <p className="num text-3xl">{round(magnitude)} Ω at {round(angle)}°</p>
+      <output className="num block text-3xl">{round(magnitude)} Ω at {round(angle)}°</output>
       <p>Resistance runs one way on figure E5-1 and reactance the other. A series capacitor sits below the resistance axis.</p>
       {showFormula ? <p>Magnitude is √(R² + X²). The angle is arctan(X / R).</p> : null}
     </section>
@@ -582,11 +645,14 @@ function PhasorLab({ showFormula, poke }: { showFormula: boolean; poke: () => vo
 function SmithLab() {
   const [r, setR] = useState(1);
   const gamma = (r - 1) / (r + 1);
-  const x = ((92 + gamma * 80) / 199) * 100;
-  const y = (118 / 218) * 100;
+  const axisLeft = 5.6;
+  const axisRight = 181.6;
+  const axisY = 119.1;
+  const x = (((axisLeft + axisRight) / 2 + gamma * ((axisRight - axisLeft) / 2)) / 199) * 100;
+  const y = (axisY / 218) * 100;
   return (
     <section className="space-y-4">
-      <h1 className="display text-5xl">Smith chart</h1>
+      <h1 className="display text-4xl sm:text-5xl">Smith chart</h1>
       <div className="relative">
         <FigureView id="E9-3" hidden={false} />
         <span className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber" style={{ left: `${x}%`, top: `${y}%` }} />
@@ -620,7 +686,7 @@ function Field({
       {label}
       <input
         data-testid={testId}
-        className="num mt-1 w-full rounded-2xl border border-line bg-card px-3 py-2"
+        className={`num mt-1 min-h-11 w-full rounded-2xl border border-line px-3 py-2 ${readOnly ? "bg-paper-deep" : "bg-card"}`}
         inputMode="decimal"
         readOnly={readOnly}
         value={readOnly ? (Number.isFinite(value) ? round(value) : "") : (draft ?? formatInput(value))}
@@ -640,7 +706,7 @@ function PrefixSelect({ label, value, onChange }: { label: string; value: number
   return (
     <label className="block">
       {label}
-      <select className="mt-1 w-full rounded-2xl border border-line bg-card px-3 py-2" value={value} onChange={(event) => onChange(Number(event.target.value))}>
+      <select className="mt-1 min-h-11 w-full rounded-2xl border border-line bg-card px-3 py-2 text-base" value={value} onChange={(event) => onChange(Number(event.target.value))}>
         {PREFIXES.map((prefix) => (
           <option key={prefix.name} value={prefix.exp}>
             {prefix.name}

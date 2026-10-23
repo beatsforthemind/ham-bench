@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { CLASS_INFO } from "@/lib/class-info";
+import { labForQuestion } from "@/lib/explain";
 import { groupStatus, readyToTest, type GroupStatus } from "@/lib/readiness";
-import { getPool } from "@/lib/pools";
+import { poolForToday } from "@/lib/pools";
 import type { LicenseClass } from "@/lib/pool-types";
 import { useBench } from "./bench-provider";
 
@@ -16,7 +17,8 @@ const STATUS_LABEL: Record<GroupStatus, string> = {
 
 export function Syllabus({ licenseClass }: { licenseClass: LicenseClass }) {
   const { progress } = useBench();
-  const pool = getPool(licenseClass);
+  const pool = poolForToday(licenseClass);
+  if (!pool) return <p>This pool is not in force, so the study map stays closed.</p>;
   return (
     <div className="space-y-8">
       {pool.subelements.map((subelement) => (
@@ -31,8 +33,8 @@ export function Syllabus({ licenseClass }: { licenseClass: LicenseClass }) {
               .map((group) => {
                 const status = groupStatus(pool, progress, group.id);
                 return (
-                  <li key={group.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                    <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`} className="text-lg">
+                  <li key={group.id} className="flex flex-wrap items-center justify-between gap-3">
+                    <Link href={`/license/${licenseClass}/study/${group.subelement}/${group.id}`} className="inline-flex min-h-11 items-center px-4 py-3 text-lg">
                       <span className="num text-ink-soft">{group.id}</span> {group.title}
                     </Link>
                     <span className="text-sm uppercase tracking-wide text-ink-soft">{STATUS_LABEL[status]}</span>
@@ -52,14 +54,23 @@ export function ProgressBoard() {
   return (
     <div className="space-y-10">
       {(["technician", "general", "extra"] as const).map((licenseClass) => {
-        const pool = getPool(licenseClass);
+        const pool = poolForToday(licenseClass);
+        if (!pool) {
+          return (
+            <section key={licenseClass} className="rounded-3xl border border-line bg-card p-6">
+              <h2 className={`display text-4xl ${CLASS_INFO[licenseClass].tone}`}>{CLASS_INFO[licenseClass].name}</h2>
+              <p className="mt-2 text-lg">This pool is not in force.</p>
+            </section>
+          );
+        }
         const cold = pool.groups.filter((group) => {
           const status = groupStatus(pool, progress, group.id);
           return status === "unseen" || status === "shaky";
         });
         const labCounts = new Map<string, number>();
         for (const group of cold) {
-          const lab = pool.questions.find((question) => question.group === group.id && question.lab)?.lab;
+          const sample = pool.questions.find((question) => question.group === group.id);
+          const lab = sample ? labForQuestion(sample.id, sample.group) : null;
           if (!lab || lab === "bands") continue;
           labCounts.set(lab, (labCounts.get(lab) ?? 0) + 1);
         }

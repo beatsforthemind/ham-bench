@@ -6,6 +6,7 @@ export type ExamPaper = {
   seed: string;
   questionIds: string[];
   createdAt: number;
+  figureOnlyIds: string[];
 };
 
 export type ExamScore = {
@@ -62,30 +63,38 @@ export function activeQuestionsByGroup(pool: PoolFile): Map<string, PoolQuestion
   return grouped;
 }
 
-export function createExam(pool: PoolFile, seed: string, createdAt = Date.now()): ExamPaper {
-  const random = mulberry32(hashSeed(`${pool.revision}:${seed}`));
+export function createExam(pool: PoolFile, seed: string, createdAt = Date.now(), diagramFree = false): ExamPaper {
+  const salt = diagramFree ? `${pool.revision}:${seed}:diagram-free` : `${pool.revision}:${seed}`;
+  const random = mulberry32(hashSeed(salt));
   const grouped = activeQuestionsByGroup(pool);
   const chosen: PoolQuestion[] = [];
+  const figureOnly = new Set<string>();
 
   for (const group of pool.groups) {
     const active = grouped.get(group.id) ?? [];
     if (active.length === 0) {
       throw new Error(`${pool.licenseClass} group ${group.id} has no active questions`);
     }
-    const index = Math.floor(random() * active.length);
-    chosen.push(active[index]!);
+    const plain = diagramFree ? active.filter((question) => !question.figure) : active;
+    const draw = plain.length > 0 ? plain : active;
+    const index = Math.floor(random() * draw.length);
+    const question = draw[index]!;
+    chosen.push(question);
+    if (diagramFree && plain.length === 0) figureOnly.add(question.id);
   }
 
   if (chosen.length !== pool.examQuestions) {
     throw new Error(`${pool.licenseClass} exam has ${chosen.length} questions, expected ${pool.examQuestions}`);
   }
 
+  const questionIds = shuffleWith(chosen, random).map((question) => question.id);
   return {
     licenseClass: pool.licenseClass,
     revision: pool.revision,
     seed,
-    questionIds: shuffleWith(chosen, random).map((question) => question.id),
+    questionIds,
     createdAt,
+    figureOnlyIds: questionIds.filter((id) => figureOnly.has(id)),
   };
 }
 

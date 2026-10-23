@@ -32,6 +32,15 @@ export function workedSteps(id: string, text: string, answers: string[]): string
   const gain = opAmpGain(text, answers);
   if (gain) return gain;
 
+  const tau = timeConstant(text);
+  if (tau) return tau;
+
+  const phase = phaseAngle(text);
+  if (phase) return phase;
+
+  const radiated = effectiveRadiated(text);
+  if (radiated) return radiated;
+
   return [];
 }
 
@@ -61,9 +70,10 @@ function convertPrefix(text: string): string[] | null {
     const value = Number(khz[1]!.replace(/,/g, ""));
     return [`${value} kHz ÷ 1,000 = ${value / 1000} MHz.`];
   }
-  const mhz = text.match(/Which is equal to ([\d,]+) MHz/i);
+  const mhz = text.match(/Which is equal to ([\d,.]+) MHz/i);
   if (mhz) {
     const value = Number(mhz[1]!.replace(/,/g, ""));
+    if (mhz[1]!.includes(".")) return [`${value} MHz × 1,000 = ${value * 1000} kHz.`];
     return [`${value} MHz ÷ 1,000 = ${value / 1000} GHz.`];
   }
   if (/one kilovolt/i.test(text)) return ["Kilo means × 1,000, so 1 kV is 1,000 volts."];
@@ -138,7 +148,7 @@ function ohmsLaw(text: string): string[] | null {
     const ohms = Number(appliedCurrent[2]);
     return [`I = E / R = ${volts} / ${ohms} = ${round(volts / ohms)} amperes.`];
   }
-  const voltage = text.match(/voltage across a ([\d.]+)-ohm resistor if a current of ([\d.]+) amperes/i);
+  const voltage = text.match(/voltage across a ([\d.]+)-ohm resistor if a current of ([\d.]+) amperes?/i);
   if (voltage) {
     const ohms = Number(voltage[1]);
     const amps = Number(voltage[2]);
@@ -164,11 +174,13 @@ function decibelStep(id: string, text: string): string[] | null {
 }
 
 function parallelResistors(text: string): string[] | null {
-  const match = text.match(/([\d.]+)-, a ([\d.]+)-, and a ([\d.]+)-ohm resistor connected in parallel/i);
+  const three = text.match(/([\d,.]+)-,\s*a ([\d,.]+)-,\s*and a ([\d,.]+)-ohm resistor connected in parallel/i);
+  const two = text.match(/([\d,.]+)-\s*and a ([\d,.]+)-ohm resistor in parallel/i);
+  const match = three ?? two;
   if (!match) return null;
-  const values = [Number(match[1]), Number(match[2]), Number(match[3])];
+  const values = match.slice(1).map((value) => Number(value!.replace(/,/g, "")));
   const total = 1 / values.reduce((sum, value) => sum + 1 / value, 0);
-  return [`1/R = ${values.map((value) => `1/${value}`).join(" + ")}. R ≈ ${round(total)} ohms, less than the smallest resistor.`];
+  return [`1/R = ${values.map((value) => `1/${value}`).join(" + ")}. R ≈ ${Math.round(total)} ohms, less than the smallest resistor.`];
 }
 
 function dipoleLength(text: string): string[] | null {
@@ -220,14 +232,50 @@ function halfPowerBandwidth(text: string): string[] | null {
 }
 
 function opAmpGain(text: string, answers: string[]): string[] | null {
-  const match = text.match(/R1 is ([\d.]+) ohms and RF is ([\d.]+) ohms/i);
+  const match = text.match(/R1 is ([\d,]+)\s*(kilohms|kohms|ohms),?\s*RF is ([\d,]+)\s*(kilohms|kohms|ohms)/i);
   if (!match) return null;
-  const r1 = Number(match[1]);
-  const rf = Number(match[2]);
+  const r1 = Number(match[1]!.replace(/,/g, "")) * (match[2] === "ohms" ? 1 : 1000);
+  const rf = Number(match[3]!.replace(/,/g, "")) * (match[4] === "ohms" ? 1 : 1000);
   const magnitude = rf / r1;
+  const input = text.match(/([\d.]+) volts DC is applied/i);
+  if (input) {
+    const vin = Number(input[1]);
+    return [`Gain magnitude is RF / R1 = ${round(magnitude)}. The minus sign is on the output: −${round(magnitude)} × ${vin} = ${round(-magnitude * vin)} volts.`];
+  }
   const signed = answers.some((answer) => answer.trim().startsWith("-"));
   const gain = signed ? -magnitude : magnitude;
-  return [`Voltage gain = −RF / R1 when the input is inverting. Magnitude is ${rf} / ${r1} = ${round(magnitude)}. The matching choice is ${gain}.`];
+  return [`Voltage gain magnitude is RF / R1 = ${rf} / ${r1} = ${round(magnitude)}. The matching choice is ${gain}.`];
+}
+
+function timeConstant(text: string): string[] | null {
+  const match = text.match(/two ([\d.]+)-microfarad capacitors and two ([\d.]+)-megohm resistors, all in parallel/i);
+  if (!match) return null;
+  const microfarad = Number(match[1]) * 2;
+  const ohms = (Number(match[2]) * 1e6) / 2;
+  return [`Parallel capacitors add and parallel resistors share. τ = RC ≈ ${round(ohms * microfarad * 1e-6)} seconds.`];
+}
+
+function phaseAngle(text: string): string[] | null {
+  const match = text.match(/XC is ([\d,.]+) ohms, R is ([\d,.]+)\s*(kilohms|kilohm|kohms|kohm|ohms|ohm), and XL is ([\d,.]+) ohms/i);
+  if (!match) return null;
+  const xc = Number(match[1]!.replace(/,/g, ""));
+  const resistance = Number(match[2]!.replace(/,/g, "")) * (match[3]!.startsWith("ohm") ? 1 : 1000);
+  const xl = Number(match[4]!.replace(/,/g, ""));
+  const reactance = xl - xc;
+  const angle = Math.abs((Math.atan2(reactance, resistance) * 180) / Math.PI);
+  const relation = reactance < 0 ? "the voltage lagging the current" : "the voltage leading the current";
+  return [`Net reactance is XL − XC = ${xl} − ${xc} = ${reactance} ohms. The angle is about ${round(angle)} degrees, with ${relation}.`];
+}
+
+function effectiveRadiated(text: string): string[] | null {
+  const watts = text.match(/([\d.]+) watts transmitter power output/i);
+  if (!watts || !/effective radiated power|effective isotropic radiated power|\bERP\b|\bEIRP\b/i.test(text)) return null;
+  const losses = [...text.matchAll(/([\d.]+) dB [^.,]*loss/gi)].reduce((sum, match) => sum + Number(match[1]), 0);
+  const gain = text.match(/([\d.]+) dB[di]/i);
+  const gainDb = gain ? Number(gain[1]) : 0;
+  const net = gainDb - losses;
+  const power = Number(watts[1]) * 10 ** (net / 10);
+  return [`Net change is ${gainDb} dB minus ${losses} dB of loss. Power ≈ ${watts[1]} × 10^(${round(net)} / 10) ≈ ${Math.round(power)} watts.`];
 }
 
 function round(value: number): string {

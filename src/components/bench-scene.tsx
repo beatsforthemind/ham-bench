@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import { CLASS_INFO } from "@/lib/class-info";
-import { benchHomeAction, classPracticeHref } from "@/lib/home-action";
+import { benchHomeAction, classPracticeHref, nextColdCard, nextColdIdea, type HomeStudyGroup } from "@/lib/home-action";
 import { pools } from "@/lib/pools";
 import type { LicenseClass } from "@/lib/pool-types";
-import { groupStatus } from "@/lib/readiness";
+import { EMPTY_PROGRESS, groupStatus } from "@/lib/readiness";
 import { useBench } from "./bench-provider";
+import { QuestionPicture } from "./question-picture";
 
 const CLASSES = ["technician", "general", "extra"] as const;
+
+function groupLink(licenseClass: LicenseClass, subelement: string): string {
+  const group = pools[licenseClass].groups.find((item) => item.subelement === subelement);
+  return group ? `/license/${licenseClass}/study/${group.subelement}/${group.id}` : `/license/${licenseClass}/study`;
+}
 
 export function BenchHome() {
   const { progress, session, ready, settings, setSettings } = useBench();
@@ -26,18 +32,32 @@ export function BenchHome() {
       }, 0) / groups.length
     );
   };
+  const deskClass: LicenseClass = ready ? settings.studyClass : "technician";
+  const deskProgress = ready ? progress : EMPTY_PROGRESS;
   const generalLit = pools.general.groups.some((group) => groupStatus(pools.general, progress, group.id) !== "unseen");
   const extraLit = pools.extra.groups.some((group) => groupStatus(pools.extra, progress, group.id) !== "unseen");
-  const savedClass: LicenseClass = ready ? settings.studyClass : "technician";
   const action = benchHomeAction(ready, settings.studyClass, progress, session);
+  const idea = nextColdIdea(deskClass, deskProgress);
+  const card = nextColdCard(deskClass, deskProgress);
+  const scopeHref = nextColdIdea("general", deskProgress)?.href ?? "/license/general/study";
+  const parts = [
+    { name: "License", href: groupLink("technician", "T1") },
+    { name: "Meters", href: "/labs/ohms?class=technician" },
+    { name: "Schematic", href: "/labs/schematics?class=technician" },
+    { name: "Sky", href: "/labs/propagation?class=technician" },
+    { name: "Antenna", href: "/labs/antenna?class=technician" },
+    { name: "Ground", href: "/labs/safety?class=technician" },
+    { name: "Scope", href: scopeHref },
+    { name: "Smith chart", href: "/labs/smith" },
+  ];
 
   return (
     <div className="space-y-8">
       <section className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <div className="max-w-xl space-y-5">
           <header className="space-y-2">
-            <h1 className="display text-4xl text-walnut sm:text-5xl">This is the bench.</h1>
-            <p className="text-lg text-ink-soft">The next card is the way in.</p>
+            <h1 className="display text-4xl text-walnut sm:text-5xl">Learn it on the bench.</h1>
+            <p className="text-lg text-ink-soft">Move a radio idea until the exam answer falls out. A card keeps the fact.</p>
           </header>
           <Link
             href={action.href}
@@ -49,26 +69,44 @@ export function BenchHome() {
             {action.label}
           </Link>
           <p className="flex flex-wrap gap-x-5 gap-y-2 text-ink-soft">
-            <Link href={`/license/${savedClass}/exam`} className="inline-flex min-h-11 items-center underline">
+            <Link href={`/license/${deskClass}/exam`} className="inline-flex min-h-11 items-center underline">
               Take a mock exam
             </Link>
-            <Link href={`/license/${savedClass}/study`} className="inline-flex min-h-11 items-center underline">
-              Study by topic
+            <Link href={classPracticeHref(deskClass, deskProgress)} className="inline-flex min-h-11 items-center underline">
+              Drill unseen questions
             </Link>
           </p>
         </div>
-        <Station
-          license={level("T1")}
-          meters={level("T5")}
-          parts={level("T6")}
-          sky={level("T3")}
-          antenna={level("T9")}
-          ground={level("T0")}
-          scope={generalLit ? 0.9 : 0.18}
-          smith={extraLit ? 0.9 : 0.15}
-        />
+        <div className="space-y-3">
+          <Station
+            license={level("T1")}
+            meters={level("T5")}
+            parts={level("T6")}
+            sky={level("T3")}
+            antenna={level("T9")}
+            ground={level("T0")}
+            scope={generalLit ? 0.9 : 0.18}
+            smith={extraLit ? 0.9 : 0.15}
+          />
+          <nav aria-label="Bench parts" className="flex flex-wrap gap-x-4 gap-y-1">
+            {parts.map((part) => (
+              <Link key={part.name} href={part.href} className="inline-flex min-h-11 items-center text-ink-soft underline">
+                {part.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </section>
-      <nav aria-label="Start a license class" className="flex flex-wrap items-center gap-x-2 text-lg">
+      <section aria-label="Next study" className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <StudyShelf kicker="On the air" empty="The radio ideas in this class are warm." group={idea} />
+          <StudyShelf kicker="For the exam" empty="The exam cards in this class are warm." group={card} showPicture />
+        </div>
+        <Link href={`/license/${deskClass}/study`} className="inline-flex min-h-11 items-center underline">
+          Open the study map
+        </Link>
+      </section>
+      <nav aria-label="Choose a license class" className="flex flex-wrap items-center gap-x-2 text-lg">
         {CLASSES.map((licenseClass, index) => (
           <span key={licenseClass} className="inline-flex items-center gap-x-2">
             {index > 0 ? (
@@ -76,16 +114,17 @@ export function BenchHome() {
                 ·
               </span>
             ) : null}
-            <Link
-              href={classPracticeHref(licenseClass, progress)}
-              aria-current={licenseClass === savedClass ? "true" : undefined}
+            <button
+              type="button"
+              aria-pressed={licenseClass === deskClass}
               onClick={() => {
-                if (settings.studyClass !== licenseClass) setSettings({ studyClass: licenseClass });
+                if (!ready || settings.studyClass === licenseClass) return;
+                setSettings({ studyClass: licenseClass });
               }}
-              className={`inline-flex min-h-11 items-center ${licenseClass === savedClass ? "font-semibold text-walnut" : "text-ink-soft"}`}
+              className={`inline-flex min-h-11 cursor-pointer items-center border-0 bg-transparent p-0 ${licenseClass === deskClass ? "font-semibold text-walnut" : "text-ink-soft"}`}
             >
               {CLASS_INFO[licenseClass].name}
-            </Link>
+            </button>
           </span>
         ))}
       </nav>
@@ -103,6 +142,41 @@ export function BenchHome() {
         </Link>
       </p>
     </div>
+  );
+}
+
+function StudyShelf({
+  kicker,
+  empty,
+  group,
+  showPicture = false,
+}: {
+  kicker: string;
+  empty: string;
+  group: HomeStudyGroup | null;
+  showPicture?: boolean;
+}) {
+  return (
+    <section className="rounded-3xl border border-line bg-card p-5">
+      <h2 className="display text-3xl">{kicker}</h2>
+      {group ? (
+        <>
+          <p className="num mt-3 text-sm text-ink-soft">{group.id}</p>
+          <h3 className="text-xl">{group.title}</h3>
+          {group.labTitle ? (
+            <p className="mt-2 text-ink-soft">
+              {group.labTitle}. {group.labSummary}
+            </p>
+          ) : null}
+          {showPicture && group.pictureId ? <QuestionPicture questionId={group.pictureId} /> : null}
+          <Link href={group.href} className="mt-3 inline-flex min-h-11 items-center underline">
+            Open this group
+          </Link>
+        </>
+      ) : (
+        <p className="mt-3 text-ink-soft">{empty}</p>
+      )}
+    </section>
   );
 }
 

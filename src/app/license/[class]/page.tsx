@@ -33,7 +33,10 @@ export default async function LicensePage({ params }: { params: Promise<{ class:
           Pool {pool.revision}. In force {pool.effectiveFrom} through {pool.effectiveThrough}. Errata {pool.errataDate}. Pass {pool.passingCount} of {pool.examQuestions}.
         </p>
         <div className="flex flex-wrap gap-3">
-          <Link href={`/license/${licenseClass}/exam`} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 py-2 text-paper no-underline">
+          <Link href={`/license/${licenseClass}/study`} className="inline-flex min-h-11 items-center rounded-full bg-walnut px-4 py-2 text-paper no-underline">
+            Study map
+          </Link>
+          <Link href={`/license/${licenseClass}/exam`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 py-2 no-underline">
             Mock exam
           </Link>
           <Link href={`/license/${licenseClass}/practice`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 py-2 no-underline">
@@ -44,9 +47,6 @@ export default async function LicensePage({ params }: { params: Promise<{ class:
           </Link>
           <Link href={`/license/${licenseClass}/practice?filter=unseen`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 py-2 no-underline">
             Unseen
-          </Link>
-          <Link href={`/license/${licenseClass}/study`} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 py-2 no-underline">
-            Study map
           </Link>
         </div>
       </header>

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { benchHomeAction, resumableClass } from "@/lib/home-action";
+import { benchHomeAction, nextColdCard, nextColdIdea, resumableClass } from "@/lib/home-action";
+import { pictureStrings } from "@/lib/question-pictures";
 import { pools, poolForToday } from "@/lib/pools";
 import type { LicenseClass } from "@/lib/pool-types";
 import { EMPTY_PROGRESS, questionKey, type ProgressBook } from "@/lib/readiness";
 import { emptySession, type ExamSession } from "@/lib/session";
+import { privateTokens } from "@/lib/teach";
 
 function seen(licenseClass: LicenseClass, ids: string[]): ProgressBook {
   const revision = pools[licenseClass].revision;
@@ -30,10 +32,10 @@ function paper(licenseClass: LicenseClass, revision = pools[licenseClass].revisi
 }
 
 describe("bench home action", () => {
-  it("starts Technician before storage hydrates, even if a paper is already saved", () => {
+  it("opens the Technician propagation lab before storage hydrates, even if a paper is already saved", () => {
     expect(benchHomeAction(false, "extra", seen("extra", ["E1A02"]), paper("technician"))).toEqual({
-      href: "/license/technician/practice?filter=unseen",
-      label: "Start Technician",
+      href: "/labs/propagation?class=technician",
+      label: "Open the propagation theater",
       studyClass: "technician",
     });
   });
@@ -62,36 +64,65 @@ describe("bench home action", () => {
     for (const session of [stale, short, finished, parked, torn]) {
       expect(resumableClass(session)).toBeNull();
     }
-    expect(benchHomeAction(true, "technician", EMPTY_PROGRESS, finished).label).toBe("Start Technician");
-  });
-
-  it("continues the saved class on unseen practice, and the whole pool once nothing is unseen", () => {
-    const first = pools.extra.questions[0];
-    expect(benchHomeAction(true, "extra", seen("extra", [first.id]), null)).toMatchObject({
-      href: "/license/extra/practice?filter=unseen",
-      label: "Continue Extra",
-      studyClass: "extra",
-    });
-    const allSeen = seen(
-      "extra",
-      pools.extra.questions.map((question) => question.id),
-    );
-    expect(benchHomeAction(true, "extra", allSeen, null).href).toBe("/license/extra/practice");
-  });
-
-  it("keeps Start Technician when the saved class has no answers", () => {
-    expect(benchHomeAction(true, "general", seen("technician", ["T1A01"]), null)).toMatchObject({
-      label: "Start Technician",
-      href: "/license/technician/practice?filter=unseen",
+    expect(benchHomeAction(true, "technician", EMPTY_PROGRESS, finished)).toEqual({
+      href: "/labs/propagation?class=technician",
+      label: "Open the propagation theater",
       studyClass: "technician",
+    });
+  });
+
+  it("starts the saved class on its own study move when that class has no answers", () => {
+    expect(benchHomeAction(true, "general", seen("technician", ["T1A01"]), null)).toEqual({
+      href: "/labs/propagation?class=general",
+      label: "Open the propagation theater",
+      studyClass: "general",
     });
     const finishedPool = seen(
       "technician",
       pools.technician.questions.map((question) => question.id),
     );
     expect(benchHomeAction(true, "general", finishedPool, null)).toMatchObject({
-      label: "Start Technician",
-      href: "/license/technician/practice",
+      href: "/labs/propagation?class=general",
+      studyClass: "general",
     });
+  });
+
+  it("opens the next cold lab-backed Extra idea, not unseen practice", () => {
+    const warm = new Set(["E3A", "E3B", "E3C"]);
+    const ids = pools.extra.questions.filter((question) => warm.has(question.group)).map((question) => question.id);
+    expect(benchHomeAction(true, "extra", seen("extra", ids), null)).toEqual({
+      href: "/labs/decibels?class=extra",
+      label: "Open the decibel ladder",
+      studyClass: "extra",
+    });
+    expect(nextColdIdea("extra", seen("extra", ids))?.id).toBe("E4C");
+  });
+
+  it("offers the mock when every group is learned or solid", () => {
+    const allSeen = seen(
+      "technician",
+      pools.technician.questions.map((question) => question.id),
+    );
+    expect(benchHomeAction(true, "technician", allSeen, null)).toEqual({
+      href: "/license/technician/exam",
+      label: "Sit the Technician paper",
+      studyClass: "technician",
+    });
+  });
+
+  it("keeps the first Technician card picture free of the correct answer", () => {
+    const card = nextColdCard("technician", EMPTY_PROGRESS);
+    expect(card).toMatchObject({ id: "T1A", pictureId: "T1A01", href: "/license/technician/study/T1/T1A" });
+    const question = pools.technician.questions.find((item) => item.id === card?.pictureId);
+    expect(question).toBeTruthy();
+    const shown = pictureStrings(card!.pictureId!).join("\n");
+    const correct = question!.answers[question!.correctIndex];
+    expect(shown).not.toContain(correct.trim());
+    for (const token of privateTokens(question!)) {
+      const pattern = /\d/.test(token)
+        ? new RegExp(`(^|[^0-9])${token}([^0-9]|$)`)
+        : new RegExp(`\\b${token}\\b`, "i");
+      expect(shown).not.toMatch(pattern);
+    }
   });
 });

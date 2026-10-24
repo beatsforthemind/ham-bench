@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     template: "%s · Ham Bench",
   },
   description:
-    "Practice the US amateur radio exams with the public-domain question pools, a one-question-per-group mock, and a workbench for the electrical questions.",
+    "Learn the ideas on the bench, keep the facts on cards, then sit the one-question-per-group mock for the US amateur radio exams.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

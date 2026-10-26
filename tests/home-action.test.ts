@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { benchHomeAction, nextColdCard, nextColdIdea, resumableClass } from "@/lib/home-action";
+import { benchHomeAction, nextColdCard, nextColdIdea, resumeAction, resumableClass } from "@/lib/home-action";
 import { pictureStrings } from "@/lib/question-pictures";
 import { pools, poolForToday } from "@/lib/pools";
 import type { LicenseClass } from "@/lib/pool-types";
@@ -32,19 +32,24 @@ function paper(licenseClass: LicenseClass, revision = pools[licenseClass].revisi
 }
 
 describe("bench home action", () => {
-  it("opens the Technician propagation lab before storage hydrates, even if a paper is already saved", () => {
-    expect(benchHomeAction(false, "extra", seen("extra", ["E1A02"]), paper("technician"))).toEqual({
-      href: "/labs/propagation?class=technician",
-      label: "Open the propagation theater",
+  it("opens Learn Technician before storage hydrates, even if a paper is already saved", () => {
+    expect(benchHomeAction(false, "extra")).toEqual({
+      href: "/license/technician/learn",
+      label: "Learn Technician",
       studyClass: "technician",
     });
   });
 
-  it("resumes a paper the exam room will open, under that class's name", () => {
+  it("keeps Learn as the button and offers a resumable paper as its own link", () => {
     expect(poolForToday("general")).not.toBeNull();
     const session = paper("general");
     expect(resumableClass(session)).toBe("general");
-    expect(benchHomeAction(true, "technician", EMPTY_PROGRESS, session)).toEqual({
+    expect(benchHomeAction(true, "technician")).toEqual({
+      href: "/license/technician/learn",
+      label: "Learn Technician",
+      studyClass: "technician",
+    });
+    expect(resumeAction(session)).toEqual({
       href: "/license/general/exam",
       label: "Resume the General paper",
       studyClass: "general",
@@ -63,51 +68,23 @@ describe("bench home action", () => {
     const torn = { ...live, answers: [] };
     for (const session of [stale, short, finished, parked, torn]) {
       expect(resumableClass(session)).toBeNull();
+      expect(resumeAction(session)).toBeNull();
     }
-    expect(benchHomeAction(true, "technician", EMPTY_PROGRESS, finished)).toEqual({
-      href: "/labs/propagation?class=technician",
-      label: "Open the propagation theater",
-      studyClass: "technician",
-    });
   });
 
-  it("starts the saved class on its own study move when that class has no answers", () => {
-    expect(benchHomeAction(true, "general", seen("technician", ["T1A01"]), null)).toEqual({
-      href: "/labs/propagation?class=general",
-      label: "Open the propagation theater",
-      studyClass: "general",
-    });
-    const finishedPool = seen(
-      "technician",
-      pools.technician.questions.map((question) => question.id),
-    );
-    expect(benchHomeAction(true, "general", finishedPool, null)).toMatchObject({
-      href: "/labs/propagation?class=general",
+  it("follows the saved class once storage has hydrated", () => {
+    expect(benchHomeAction(true, "general")).toEqual({
+      href: "/license/general/learn",
+      label: "Learn General",
       studyClass: "general",
     });
   });
 
-  it("opens the next cold lab-backed Extra idea, not unseen practice", () => {
+  it("keeps the next cold Extra idea on the shelf, not on the Learn button", () => {
     const warm = new Set(["E3A", "E3B", "E3C"]);
     const ids = pools.extra.questions.filter((question) => warm.has(question.group)).map((question) => question.id);
-    expect(benchHomeAction(true, "extra", seen("extra", ids), null)).toEqual({
-      href: "/labs/decibels?class=extra",
-      label: "Open the decibel ladder",
-      studyClass: "extra",
-    });
     expect(nextColdIdea("extra", seen("extra", ids))?.id).toBe("E4C");
-  });
-
-  it("offers the mock when every group is learned or solid", () => {
-    const allSeen = seen(
-      "technician",
-      pools.technician.questions.map((question) => question.id),
-    );
-    expect(benchHomeAction(true, "technician", allSeen, null)).toEqual({
-      href: "/license/technician/exam",
-      label: "Sit the Technician paper",
-      studyClass: "technician",
-    });
+    expect(benchHomeAction(true, "extra").href).toBe("/license/extra/learn");
   });
 
   it("keeps the first Technician card picture free of the correct answer", () => {

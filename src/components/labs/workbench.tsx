@@ -10,6 +10,7 @@ import { presetFromQuestion } from "@/lib/presets";
 import type { LicenseClass, PoolQuestion } from "@/lib/pool-types";
 import { FIGURE_ASSETS } from "@/lib/pool-facts";
 import { FigureView } from "../figure";
+import { ReturnToQuestion } from "../return-to-question";
 import { useBench } from "../bench-provider";
 
 export function Workbench({ slug }: { slug: string }) {
@@ -24,6 +25,7 @@ export function Workbench({ slug }: { slug: string }) {
   if (!classAtLeast(requested, lab.min)) {
     return (
       <section className="max-w-2xl space-y-4">
+        <ReturnToQuestion />
         <h1 className="display text-4xl sm:text-5xl">{lab.title}</h1>
         <p className="text-xl">
           This bench belongs to the {lab.min} pool. Technician study stays on the earlier benches unless you open this one on purpose.
@@ -41,6 +43,7 @@ export function Workbench({ slug }: { slug: string }) {
   const showFormula = touched || search.has("q");
   return (
     <div className="space-y-4">
+      <ReturnToQuestion />
       {lab.min !== "technician" ? <p className="text-sm uppercase tracking-widest text-ink-soft">{lab.min} bench</p> : null}
       <LabBody slug={lab.slug} requested={requested} showFormula={showFormula} poke={() => setTouched(true)} />
     </div>

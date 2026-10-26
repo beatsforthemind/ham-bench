@@ -88,11 +88,12 @@ export function SiteHeader() {
   const sessionOn = useContext(SessionBarOnContext);
   const pathname = usePathname();
   const navClass = classFromPath(pathname) ?? settings.studyClass;
-  const onStudy = Boolean(classFromPath(pathname)) && !pathname.includes("/practice") && !pathname.includes("/exam");
+  const onStudy =
+    Boolean(classFromPath(pathname)) && !pathname.includes("/practice") && !pathname.includes("/exam") && !pathname.includes("/learn");
   const phoneLinks = [
     { href: "/", label: "Bench", on: pathname === "/" },
     { href: `/license/${navClass}`, label: "Study", on: onStudy },
-    { href: `/license/${navClass}/practice`, label: "Practice", on: pathname.includes("/practice") },
+    { href: `/license/${navClass}/learn`, label: "Learn", on: pathname.includes("/learn") },
     { href: `/license/${navClass}/exam`, label: "Exam", on: pathname.includes("/exam") },
     { href: "/progress", label: "Progress", on: pathname.startsWith("/progress") },
   ];

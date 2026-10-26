@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CLASS_INFO } from "@/lib/class-info";
-import { benchHomeAction, classPracticeHref, nextColdCard, nextColdIdea, type HomeStudyGroup } from "@/lib/home-action";
+import { benchHomeAction, nextColdCard, nextColdIdea, resumeAction, type HomeStudyGroup } from "@/lib/home-action";
 import { pools } from "@/lib/pools";
 import type { LicenseClass } from "@/lib/pool-types";
 import { EMPTY_PROGRESS, groupStatus } from "@/lib/readiness";
@@ -36,7 +36,8 @@ export function BenchHome() {
   const deskProgress = ready ? progress : EMPTY_PROGRESS;
   const generalLit = pools.general.groups.some((group) => groupStatus(pools.general, progress, group.id) !== "unseen");
   const extraLit = pools.extra.groups.some((group) => groupStatus(pools.extra, progress, group.id) !== "unseen");
-  const action = benchHomeAction(ready, settings.studyClass, progress, session);
+  const action = benchHomeAction(ready, settings.studyClass);
+  const resume = ready ? resumeAction(session) : null;
   const idea = nextColdIdea(deskClass, deskProgress);
   const card = nextColdCard(deskClass, deskProgress);
   const scopeHref = nextColdIdea("general", deskProgress)?.href ?? "/license/general/study";
@@ -69,11 +70,13 @@ export function BenchHome() {
             {action.label}
           </Link>
           <p className="flex flex-wrap gap-x-5 gap-y-2 text-ink-soft">
+            {resume ? (
+              <Link href={resume.href} className="inline-flex min-h-11 items-center underline">
+                {resume.label}
+              </Link>
+            ) : null}
             <Link href={`/license/${deskClass}/exam`} className="inline-flex min-h-11 items-center underline">
               Take a mock exam
-            </Link>
-            <Link href={classPracticeHref(deskClass, deskProgress)} className="inline-flex min-h-11 items-center underline">
-              Drill unseen questions
             </Link>
           </p>
         </div>

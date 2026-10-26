@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { BandMap } from "@/components/band-map";
+import { ReturnToQuestion } from "@/components/return-to-question";
 
 export const metadata: Metadata = { title: "Bands" };
 
@@ -12,6 +13,7 @@ export default function BandsPage() {
         Privilege edges come from Part 97, not from a publisher’s chart. Ask the map whether 28.4 MHz phone is legal for a Technician.
       </p>
       <Suspense fallback={<p>Opening the band map.</p>}>
+        <ReturnToQuestion />
         <BandMap />
       </Suspense>
     </div>

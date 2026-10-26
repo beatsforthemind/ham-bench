@@ -12,12 +12,18 @@ import { questionPicture } from "@/lib/question-pictures";
 import { cardFact, cardLead, ideaBeforeAnswer, stepsBeforeAnswer } from "@/lib/teach";
 import { FigureView } from "./figure";
 import { QuestionPicture } from "./question-picture";
+import { LearnRoom } from "./learn-room";
 import { useBench } from "./bench-provider";
 import { SessionBar } from "./site-header";
 
 const LETTERS = ["A", "B", "C", "D"];
 
-export function PracticeRoom() {
+export function PracticeRoom({ learn = false }: { learn?: boolean }) {
+  if (learn) return <LearnRoom />;
+  return <DrillRoom />;
+}
+
+function DrillRoom() {
   const params = useParams<{ class: string }>();
   const search = useSearchParams();
   const license = isLicenseClass(params.class) ? params.class : null;

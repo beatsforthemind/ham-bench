@@ -3,7 +3,7 @@ import { labBySlug } from "@/lib/labs-catalog";
 import { poolForToday, pools } from "@/lib/pools";
 import type { LicenseClass, PoolFile, PoolGroup } from "@/lib/pool-types";
 import { questionPicture } from "@/lib/question-pictures";
-import { EMPTY_PROGRESS, groupStatus, questionSeen, type GroupStatus, type ProgressBook } from "@/lib/readiness";
+import { groupStatus, type GroupStatus, type ProgressBook } from "@/lib/readiness";
 import type { ExamSession } from "@/lib/session";
 
 export type BenchHomeAction = {
@@ -22,12 +22,6 @@ export type HomeStudyGroup = {
   labSummary: string | null;
   pictureId: string | null;
 };
-
-export function classPracticeHref(licenseClass: LicenseClass, progress: ProgressBook): string {
-  const pool = pools[licenseClass];
-  const unseen = pool.questions.some((question) => !questionSeen(progress, pool.revision, question));
-  return `/license/${licenseClass}/practice${unseen ? "?filter=unseen" : ""}`;
-}
 
 /** The exam room opens a paper only when the saved session still matches today's pool. */
 export function resumableClass(session: ExamSession | null): LicenseClass | null {
@@ -75,8 +69,8 @@ function describeGroup(licenseClass: LicenseClass, pool: PoolFile, group: PoolGr
 }
 
 /**
- * The next idea prefers a cold group that has a lab, so the desk and the button
- * open on something you can move. A bare idea is the fallback.
+ * The next idea prefers a cold group that has a lab, so the desk shelf
+ * opens on something you can move. A bare idea is the fallback.
  */
 export function nextColdIdea(licenseClass: LicenseClass, progress: ProgressBook): HomeStudyGroup | null {
   const pool = pools[licenseClass];
@@ -91,53 +85,21 @@ export function nextColdCard(licenseClass: LicenseClass, progress: ProgressBook)
   return picked ? describeGroup(licenseClass, pool, picked, "card") : null;
 }
 
-function openLabLabel(title: string): string {
-  const head = title.split(/[\s,]/, 1)[0] ?? "";
-  const keepCase = (head.length > 1 && head === head.toUpperCase()) || /^(Ohm|Smith)\b/.test(title);
-  const phrase = keepCase ? title : `${title.charAt(0).toLowerCase()}${title.slice(1)}`;
-  return `Open the ${phrase}`;
-}
-
-function studyMove(licenseClass: LicenseClass, progress: ProgressBook): BenchHomeAction {
-  const idea = nextColdIdea(licenseClass, progress);
-  if (idea?.labSlug) {
-    return {
-      href: `/labs/${idea.labSlug}?class=${licenseClass}`,
-      label: idea.labTitle ? openLabLabel(idea.labTitle) : `Open the ${idea.labSlug}`,
-      studyClass: licenseClass,
-    };
-  }
-  const group = idea ?? nextColdCard(licenseClass, progress);
-  if (group) {
-    return {
-      href: group.href,
-      label: `Learn ${group.title}`,
-      studyClass: licenseClass,
-    };
-  }
+export function benchHomeAction(ready: boolean, studyClass: LicenseClass): BenchHomeAction {
+  const licenseClass = ready ? studyClass : "technician";
   return {
-    href: `/license/${licenseClass}/exam`,
-    label: `Sit the ${CLASS_INFO[licenseClass].name} paper`,
+    href: `/license/${licenseClass}/learn`,
+    label: `Learn ${CLASS_INFO[licenseClass].name}`,
     studyClass: licenseClass,
   };
 }
 
-const START = studyMove("technician", EMPTY_PROGRESS);
-
-export function benchHomeAction(
-  ready: boolean,
-  studyClass: LicenseClass,
-  progress: ProgressBook,
-  session: ExamSession | null,
-): BenchHomeAction {
-  if (!ready) return START;
+export function resumeAction(session: ExamSession | null): BenchHomeAction | null {
   const openPaper = resumableClass(session);
-  if (openPaper) {
-    return {
-      href: `/license/${openPaper}/exam`,
-      label: `Resume the ${CLASS_INFO[openPaper].name} paper`,
-      studyClass: openPaper,
-    };
-  }
-  return studyMove(studyClass, progress);
+  if (!openPaper) return null;
+  return {
+    href: `/license/${openPaper}/exam`,
+    label: `Resume the ${CLASS_INFO[openPaper].name} paper`,
+    studyClass: openPaper,
+  };
 }
